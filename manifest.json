@@ -1,0 +1,10 @@
+{
+  "id": "tasks-nl",
+  "name": "Tasks NL",
+  "version": "0.9.0",
+  "minAppVersion": "1.8.7",
+  "description": "Next Level Productivity for Obsidian.",
+  "author": "Joost van der Hulst",
+  "authorUrl": "https://www.ikstaevenstilbij.nl",
+  "isDesktopOnly": false
+}
