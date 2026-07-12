@@ -184,10 +184,22 @@ Tekst
 	],
 };
 
-function normalizeHashtag(value: string): string {
+export function normalizeHashtag(value: string): string {
 	const trimmed = value.trim();
 	if (!trimmed) return "";
 	return trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+}
+
+
+export function normalizeWorkspaceExcludedTags(values: string[]): string[] {
+	const unique = new Set<string>();
+
+	for (const value of values) {
+		const normalized = normalizeHashtag(value).toLocaleLowerCase("nl-NL");
+		if (normalized) unique.add(normalized);
+	}
+
+	return [...unique];
 }
 
 function parseSynonyms(value: string): string[] {
@@ -214,9 +226,9 @@ export function mergeSettings(saved: Partial<TasksNLSettings> | null): TasksNLSe
 		showStatusBarItem:
 			source.showStatusBarItem ?? DEFAULT_SETTINGS.showStatusBarItem,
 		showPreview: source.showPreview ?? DEFAULT_SETTINGS.showPreview,
-		workspaceExcludedTags: (
+		workspaceExcludedTags: normalizeWorkspaceExcludedTags(
 			source.workspaceExcludedTags ?? DEFAULT_SETTINGS.workspaceExcludedTags
-		).map(normalizeHashtag).filter(Boolean),
+		),
 		workspaceWidgets: {
 			...DEFAULT_SETTINGS.workspaceWidgets,
 			...(source.workspaceWidgets ?? {}),

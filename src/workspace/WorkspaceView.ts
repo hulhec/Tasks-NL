@@ -11,6 +11,7 @@ import TasksNLPlugin from "../main";
 import { Task } from "../models/Task";
 import { TaskQueryService } from "./TaskQueryService";
 import { refreshOpenMarkdownViews } from "../services/OpenFileSyncService";
+import { normalizeWorkspaceExcludedTags } from "../settings";
 
 export const TASKS_NL_WORKSPACE_VIEW = "tasks-nl-workspace";
 
@@ -21,7 +22,8 @@ type WorkspaceSectionId =
 	| "week"
 	| "later"
 	| "waiting"
-	| "someday";
+	| "someday"
+	| `hidden-${string}`;
 
 interface WorkspaceSection {
 	id: WorkspaceSectionId;
@@ -373,6 +375,11 @@ export class TasksNLWorkspaceView extends ItemView {
 
 	private buildSections(tasks: Task[]): WorkspaceSection[] {
 		this.taskById = new Map(tasks.map((task) => [task.id, task]));
+
+		if (this.showHiddenOnly) {
+			return this.buildHiddenSections(tasks);
+		}
+
 		const reviewTasks = this.reviewTasks(tasks);
 		const nonReviewTasks = tasks.filter((task) => !this.isReviewTask(task));
 		const openTasks = nonReviewTasks.filter((task) => !task.voltooid);
@@ -421,6 +428,116 @@ export class TasksNLWorkspaceView extends ItemView {
 		}));
 	}
 
+
+	private buildHiddenSections(tasks: Task[]): WorkspaceSection[] {
+		const excludedTags = normalizeWorkspaceExcludedTags(
+			this.plugin.settings.workspaceExcludedTags
+		);
+		const gtdStatusTags = new Set([
+			...this.gtdHashtags("waiting"),
+			...this.gtdHashtags("someday"),
+		]);
+		const groupingTags = excludedTags
+			.filter((tag) => !gtdStatusTags.has(tag))
+			.sort((a, b) =>
+				a.localeCompare(b, "en", { sensitivity: "base" })
+			);
+		const excluded = new Set(groupingTags);
+
+		let hiddenTasks = tasks.filter((task) => {
+			if (task.voltooid) return false;
+
+			// Review subtasks inherit #tasks-nl-review from their parent and
+			// must never be shown in the Hidden overview.
+			if (task.parentId && this.isReviewTask(task)) return false;
+
+			return (
+				Boolean(task.verborgenDoorVolgorde) ||
+				this.effectiveHashtags(task).some((tag) =>
+					excluded.has(this.normalizeHashtag(tag))
+				)
+			);
+		});
+
+		if (this.selectedProject) {
+			hiddenTasks = hiddenTasks.filter((task) =>
+				task.hashtags.some(
+					(tag) =>
+						this.normalizeHashtag(tag) ===
+						this.selectedProject
+				)
+			);
+		}
+
+		if (this.selectedPerson) {
+			hiddenTasks = hiddenTasks.filter((task) =>
+				task.hashtags.some(
+					(tag) =>
+						this.normalizeHashtag(tag) ===
+						this.selectedPerson
+				)
+			);
+		}
+
+		const query = this.searchText
+			.trim()
+			.toLocaleLowerCase("nl-NL");
+
+		if (query) {
+			hiddenTasks = hiddenTasks.filter((task) => {
+				const haystack = [
+					task.titel,
+					task.bronBestand ?? "",
+					...task.hashtags,
+				]
+					.join(" ")
+					.toLocaleLowerCase("nl-NL");
+
+				return haystack.includes(query);
+			});
+		}
+
+		const assigned = new Set<string>();
+		const sections: WorkspaceSection[] = [];
+
+		for (const excludedTag of groupingTags) {
+			const sectionTasks = hiddenTasks.filter((task) => {
+				if (assigned.has(task.id)) return false;
+
+				const effective = new Set(
+					this.effectiveHashtags(task).map((tag) =>
+						this.normalizeHashtag(tag)
+					)
+				);
+
+				return effective.has(excludedTag);
+			});
+
+			if (sectionTasks.length === 0) continue;
+			for (const task of sectionTasks) assigned.add(task.id);
+
+			sections.push({
+				id: `hidden-${excludedTag.replace(/^#/u, "")}`,
+				label: excludedTag,
+				tasks: this.sortWorkspaceTasks(sectionTasks),
+			});
+		}
+
+		const otherHidden = hiddenTasks.filter(
+			(task) => !assigned.has(task.id)
+		);
+
+		if (otherHidden.length > 0) {
+			sections.push({
+				id: "hidden-other",
+				label: "Other hidden",
+				tasks: this.sortWorkspaceTasks(otherHidden),
+			});
+		}
+
+		return sections;
+	}
+
 	private reviewTasks(tasks: Task[]): Task[] {
 		return tasks.filter((task) => !task.voltooid && this.isReviewTask(task));
 	}
@@ -458,11 +575,10 @@ export class TasksNLWorkspaceView extends ItemView {
 	): Task[] {
 		let filtered = tasks;
 
-		const excluded = new Set(
-			this.plugin.settings.workspaceExcludedTags.map((tag) =>
-				this.normalizeHashtag(tag)
-			)
+		const excludedTags = normalizeWorkspaceExcludedTags(
+			this.plugin.settings.workspaceExcludedTags
 		);
+		const excluded = new Set(excludedTags);
 		const gtdStatusTags = new Set([
 			...this.gtdHashtags("waiting"),
 			...this.gtdHashtags("someday"),
@@ -478,7 +594,14 @@ export class TasksNLWorkspaceView extends ItemView {
 			});
 
 		if (this.showHiddenOnly) {
-			filtered = filtered.filter(isHidden);
+			filtered = filtered
+				.filter(isHidden)
+				// Review subtasks inherit #tasks-nl-review from their parent.
+				// They must not appear when the Hidden filter is enabled.
+				.filter(
+					(task) =>
+						!(Boolean(task.parentId) && this.isReviewTask(task))
+				);
 		} else {
 			filtered = filtered.filter((task) => !isHidden(task));
 		}
@@ -519,6 +642,16 @@ export class TasksNLWorkspaceView extends ItemView {
 
 				return haystack.includes(query);
 			});
+		}
+
+		if (this.showHiddenOnly) {
+			// Do not call withVisibleParents here: that could add review parents
+			// back to the Hidden result after their subtasks were removed.
+			return this.queries.sortByExcludedHashtag(
+				filtered,
+				excludedTags,
+				(task) => this.effectiveHashtags(task)
+			);
 		}
 
 		return this.withVisibleParents(this.sortWorkspaceTasks(filtered));

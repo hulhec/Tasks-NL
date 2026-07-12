@@ -107,6 +107,42 @@ export class TaskQueryService {
 		return this.sort(this.open(tasks).filter((task) => Boolean(task.herhaling)));
 	}
 
+
+	/**
+	 * Sort hidden tasks by the excluded hashtag that caused them to be hidden.
+	 * Hashtags are sorted alphabetically; tasks without a matching hashtag
+	 * are placed last. The regular workspace order is used within each group.
+	 */
+	sortByExcludedHashtag(
+		tasks: Task[],
+		excludedHashtags: string[],
+		getHashtags: (task: Task) => string[]
+	): Task[] {
+		const excluded = new Set(
+			excludedHashtags.map((tag) => tag.toLocaleLowerCase("nl-NL"))
+		);
+		const regularOrder = new Map(
+			this.sort(tasks).map((task, index) => [task.id, index])
+		);
+		const groupFor = (task: Task): string =>
+			getHashtags(task)
+				.map((tag) => tag.toLocaleLowerCase("nl-NL"))
+				.filter((tag) => excluded.has(tag))
+				.sort((a, b) => a.localeCompare(b, "nl", { sensitivity: "base" }))[0] ??
+			"\uffff";
+
+		return [...tasks].sort((a, b) => {
+			const groupDifference = groupFor(a).localeCompare(
+				groupFor(b),
+				"nl",
+				{ sensitivity: "base" }
+			);
+			if (groupDifference !== 0) return groupDifference;
+
+			return (regularOrder.get(a.id) ?? 0) - (regularOrder.get(b.id) ?? 0);
+		});
+	}
+
 	private sort(tasks: Task[]): Task[] {
 		const priorityOrder = {
 			highest: 0,
