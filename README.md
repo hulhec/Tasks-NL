@@ -127,4 +127,6 @@ If Tasks NL saves you time and helps you stay organized, you can support future 
 
 ## License
 
-MIT License
+Tasks NL is released under the MIT License.
+
+See the LICENSE file for details.
