@@ -1,4 +1,4 @@
-/* eslint-disable obsidianmd/ui/sentence-case */
+ 
 import {
 	ItemView,
 	Menu,
@@ -235,7 +235,7 @@ export class TasksNLWorkspaceView extends ItemView {
 			this.searchText = search.value;
 			this.render(tasks);
 
-			requestAnimationFrame(() => {
+			window.requestAnimationFrame(() => {
 				const nextSearch =
 					this.contentEl.querySelector<HTMLInputElement>(
 						".tasks-nl-workspace-search"
@@ -1230,6 +1230,7 @@ export class TasksNLWorkspaceView extends ItemView {
 			: "";
 
 		return (
+			fullName ||
 			definition?.firstName ||
 			definition?.alias ||
 			hashtag.replace(/^#/u, "")

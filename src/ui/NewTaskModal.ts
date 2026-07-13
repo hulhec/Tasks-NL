@@ -56,7 +56,7 @@ export class NewTaskModal extends Modal {
 			text: "Tasks NL",
 		});
 
-		header.createEl("div", {
+		header.createDiv({
 			cls: "tasks-nl-brand-subtitle",
 			text: "Next Level Productivity for Obsidian",
 		});
@@ -297,7 +297,7 @@ export class NewTaskModal extends Modal {
 			])
 		);
 
-		this.previewEl.createEl("div", {
+		this.previewEl.createDiv({
 			cls: "tasks-nl-preview-title",
 			text:
 				natural.titel ||
@@ -408,7 +408,7 @@ export class NewTaskModal extends Modal {
 			parser.parse(this.taskText)
 		);
 
-		this.previewEl.createEl("div", {
+		this.previewEl.createDiv({
 			cls: "tasks-nl-preview-title",
 			text: normalized.titel,
 		});
@@ -457,12 +457,12 @@ export class NewTaskModal extends Modal {
 			cls: "tasks-nl-preview-meta-row",
 		});
 
-		row.createEl("span", {
+		row.createSpan({
 			cls: "tasks-nl-preview-meta-label",
 			text: `${label}:`,
 		});
 
-		row.createEl("span", {
+		row.createSpan({
 			text: value,
 		});
 	}

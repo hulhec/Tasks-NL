@@ -1,4 +1,4 @@
-/* eslint-disable obsidianmd/ui/sentence-case */
+ 
 import { App, Modal, Setting, setIcon } from "obsidian";
 import type { TaskTemplate } from "../settings";
 
@@ -34,7 +34,7 @@ export class TemplatePickerModal extends Modal {
 			setIcon(icon, template.icon || "list-checks");
 			const text = button.createDiv({ cls: "tasks-nl-template-card-text" });
 			text.createEl("strong", { text: template.name });
-			text.createEl("span", { text: `${template.folderPath || "/"} / ${template.fileNamePattern}` });
+			text.createSpan({ text: `${template.folderPath || "/"} / ${template.fileNamePattern}` });
 			text.createEl("small", { text: `${template.subtasks.length} subtasks` });
 			button.addEventListener("click", () => {
 				this.close();

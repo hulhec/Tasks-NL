@@ -259,27 +259,27 @@ export function mergeSettings(saved: Partial<TasksNLSettings> | null): TasksNLSe
 			const savedTemplates = source.taskTemplates ?? [];
 			const reviewTemplates = DEFAULT_SETTINGS.taskTemplates.map((fallback) => savedTemplates.find((item) => item.id === fallback.id) ?? fallback);
 			return reviewTemplates.map((item, index) => {
-			let mainTask = item.mainTask || "Task";
-			// Migrate the first template implementation without overwriting user edits.
-			if (item.id === "week-review" && mainTask === "Week review {{date}} weekly") {
-				mainTask = "Week review week {{week}}";
-			}
-			if (item.id === "month-review" && mainTask === "Month review {{month}} monthly") {
-				mainTask = "Month review {{month}}";
-			}
-			return {
-				id: item.id || `template-${index + 1}`,
-				name: item.name || "Template",
-				icon: item.icon || "list-checks",
-				mainTask,
-				subtasks: Array.isArray(item.subtasks) ? item.subtasks : [],
-				fileNamePattern: item.fileNamePattern || (item.id === "week-review" ? "[Weekreview] WW YYYY" : item.id === "month-review" ? "[Maandreview] MMMM YYYY" : "YYYY-MM-DD [Review]"),
-				folderPath: item.folderPath || "Reviews",
-				noteTemplate: item.noteTemplate || `##### Tasks\n\n{{tasks}}\n##### New tasks after the review\n\n\n##### Summary\n\n`,
-				builtIn: item.builtIn ?? false,
-				autoCreate: item.autoCreate ?? false,
-				autoCreateWeekday: item.autoCreateWeekday ?? 5,
-			};
+				let mainTask = item.mainTask || "Task";
+				// Migrate the first template implementation without overwriting user edits.
+				if (item.id === "week-review" && mainTask === "Week review {{date}} weekly") {
+					mainTask = "Week review week {{week}}";
+				}
+				if (item.id === "month-review" && mainTask === "Month review {{month}} monthly") {
+					mainTask = "Month review {{month}}";
+				}
+				return {
+					id: item.id || `template-${index + 1}`,
+					name: item.name || "Template",
+					icon: item.icon || "list-checks",
+					mainTask,
+					subtasks: Array.isArray(item.subtasks) ? item.subtasks : [],
+					fileNamePattern: item.fileNamePattern || (item.id === "week-review" ? "[Weekreview] WW YYYY" : item.id === "month-review" ? "[Maandreview] MMMM YYYY" : "YYYY-MM-DD [Review]"),
+					folderPath: item.folderPath || "Reviews",
+					noteTemplate: item.noteTemplate || `##### Tasks\n\n{{tasks}}\n##### New tasks after the review\n\n\n##### Summary\n\n`,
+					builtIn: item.builtIn ?? false,
+					autoCreate: item.autoCreate ?? false,
+					autoCreateWeekday: item.autoCreateWeekday ?? 5,
+				};
 			});
 		})(),
 	};
@@ -310,8 +310,8 @@ export class TasksNLSettingTab extends PluginSettingTab {
 		containerEl.empty();
 		containerEl.addClass("tasks-nl-settings");
 		const header = containerEl.createDiv({ cls: "tasks-nl-brand-header" });
-		new Setting(header).setName("Tasks NL").setHeading();
-		header.createEl("div", {
+		;
+		header.createDiv({
 			cls: "tasks-nl-brand-subtitle",
 			text: "Next Level Productivity for Obsidian",
 		});
@@ -327,7 +327,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 	}
 
 	private renderGeneralSection(containerEl: HTMLElement): void {
-		containerEl.createEl("h3", { text: "General" });
+		;
 
 		new Setting(containerEl)
 			.setName("Default task title")
@@ -362,7 +362,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 
 
 	private renderCaptureSection(containerEl: HTMLElement): void {
-		containerEl.createEl("h3", { text: "Capture" });
+		new Setting(containerEl).setName("Capture").setHeading();
 
 		new Setting(containerEl)
 			.setName("Keep completed recurring task")
@@ -431,7 +431,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 	}
 
 	private renderTemplatesSection(containerEl: HTMLElement): void {
-		containerEl.createEl("h3", { text: "Reviews" });
+		new Setting(containerEl).setName("Reviews").setHeading();
 		containerEl.createEl("p", {
 			text: "Configure the weekly and monthly review notes. The preview updates immediately.",
 			cls: "setting-item-description",
@@ -441,8 +441,8 @@ export class TasksNLSettingTab extends PluginSettingTab {
 			const layout = containerEl.createDiv({ cls: "tasks-nl-review-settings-layout" });
 			const controls = layout.createDiv({ cls: "tasks-nl-review-settings-controls" });
 			const preview = layout.createDiv({ cls: "tasks-nl-review-settings-preview" });
-			controls.createEl("h4", { text: template.name });
-			preview.createEl("h4", { text: "Preview" });
+			new Setting(controls).setName("").setHeading();
+			new Setting(preview).setName("Preview").setHeading();
 
 			const refreshPreview = (): void => {
 				preview.querySelectorAll(":scope > pre, :scope > .tasks-nl-review-preview-file").forEach((el) => el.remove());
@@ -461,32 +461,153 @@ export class TasksNLSettingTab extends PluginSettingTab {
 					.replace(/\{\{review_type\}\}/giu, template.name);
 				preview.createEl("pre", { text: rendered });
 			};
+			new Setting(controls)
+				.setName("Automatic creation")
+				.setDesc("Create the review automatically on the selected weekday.")
+				.addToggle((toggle) =>
+					toggle
+						.setValue(template.autoCreate ?? false)
+						.onChange((value) => {
+							template.autoCreate = value;
+							void this.persist();
+						}),
+				);
 
-			new Setting(controls).setName("Automatic creation").setDesc("Create the review automatically on the selected weekday.").addToggle((toggle) => toggle.setValue(template.autoCreate ?? false).onChange(async (value) => { template.autoCreate = value; await this.persist(); }));
-			new Setting(controls).setName("Weekday").setDesc("Friday is the default. The monthly review uses the last selected weekday in the month.").addDropdown((dropdown) => {
-				[[1,"Monday"],[2,"Tuesday"],[3,"Wednesday"],[4,"Thursday"],[5,"Friday"],[6,"Saturday"],[0,"Sunday"]].forEach(([value,label]) => dropdown.addOption(String(value), String(label)));
-				dropdown.setValue(String(template.autoCreateWeekday ?? 5)).onChange(async (value) => { template.autoCreateWeekday = Number(value); await this.persist(); });
+			new Setting(controls)
+				.setName("Weekday")
+				.setDesc(
+					"Friday is the default. The monthly review uses the last selected weekday in the month.",
+				)
+				.addDropdown((dropdown) => {
+					[
+						[1, "Monday"],
+						[2, "Tuesday"],
+						[3, "Wednesday"],
+						[4, "Thursday"],
+						[5, "Friday"],
+						[6, "Saturday"],
+						[0, "Sunday"],
+					].forEach(([value, label]) => {
+						dropdown.addOption(String(value), String(label));
+					});
+
+					dropdown
+						.setValue(String(template.autoCreateWeekday ?? 5))
+						.onChange((value) => {
+							template.autoCreateWeekday = Number(value);
+							void this.persist();
+						});
+				});
+
+			new Setting(controls)
+				.setName("Folder in vault")
+				.setDesc("Both review types may use the same folder.")
+				.addText((text) =>
+					text
+						.setPlaceholder("Reviews")
+						.setValue(template.folderPath)
+						.onChange((value) => {
+							template.folderPath = value.trim();
+
+							void this.persist().then(() => {
+								refreshPreview();
+							});
+						}),
+				);
+
+			new Setting(controls)
+				.setName("Filename format")
+				.setDesc(
+					"Moment syntax. Literal text goes in square brackets. Example shown on the right.",
+				)
+				.addText((text) =>
+					text
+						.setValue(template.fileNamePattern)
+						.onChange((value) => {
+							template.fileNamePattern =
+								value.trim() || "YYYY-MM-DD [Review]";
+
+							void this.persist().then(() => {
+								refreshPreview();
+							});
+						}),
+				);
+
+			new Setting(controls)
+				.setName("Main task")
+				.setDesc("Use {{FILENAME}} to insert the generated note name.")
+				.addText((text) =>
+					text
+						.setValue(template.mainTask)
+						.onChange((value) => {
+							template.mainTask = value;
+
+							void this.persist().then(() => {
+								refreshPreview();
+							});
+						}),
+				);
+
+			controls.createEl("label", {
+				text: "Subtasks, one per line",
+				cls: "tasks-nl-review-editor-label",
 			});
-			new Setting(controls).setName("Folder in vault").setDesc("Both review types may use the same folder.").addText((text) => text.setPlaceholder("Reviews").setValue(template.folderPath).onChange(async (value) => { template.folderPath = value.trim(); await this.persist(); refreshPreview(); }));
-			new Setting(controls).setName("Filename format").setDesc("Moment syntax. Literal text goes in square brackets. Example shown on the right.").addText((text) => text.setValue(template.fileNamePattern).onChange(async (value) => { template.fileNamePattern = value.trim() || "YYYY-MM-DD [Review]"; await this.persist(); refreshPreview(); }));
-			new Setting(controls).setName("Main task").setDesc("Use {{FILENAME}} to insert the generated note name.").addText((text) => text.setValue(template.mainTask).onChange(async (value) => { template.mainTask = value; await this.persist(); refreshPreview(); }));
-			controls.createEl("label", { text: "Subtasks, one per line", cls: "tasks-nl-review-editor-label" });
-			const subtasks = controls.createEl("textarea", { cls: "tasks-nl-template-subtasks", attr: { rows: "6" } });
+
+			const subtasks = controls.createEl("textarea", {
+				cls: "tasks-nl-template-subtasks",
+				attr: { rows: "6" },
+			});
+
 			subtasks.value = template.subtasks.join("\n");
-			subtasks.addEventListener("input", () => { template.subtasks = subtasks.value.split(/\r?\n/u).map((item) => item.trim()).filter(Boolean); refreshPreview(); });
-			subtasks.addEventListener("change", async () => this.persist());
-			controls.createEl("label", { text: "Markdown template", cls: "tasks-nl-review-editor-label" });
-			const editor = controls.createEl("textarea", { cls: "tasks-nl-review-markdown-editor", attr: { rows: "16", spellcheck: "false" } });
+
+			subtasks.addEventListener("input", () => {
+				template.subtasks = subtasks.value
+					.split(/\r?\n/u)
+					.map((item) => item.trim())
+					.filter(Boolean);
+
+				refreshPreview();
+			});
+
+			subtasks.addEventListener("change", () => {
+				void this.persist();
+			});
+
+			controls.createEl("label", {
+				text: "Markdown template",
+				cls: "tasks-nl-review-editor-label",
+			});
+
+			const editor = controls.createEl("textarea", {
+				cls: "tasks-nl-review-markdown-editor",
+				attr: {
+					rows: "16",
+					spellcheck: "false",
+				},
+			});
+
 			editor.value = template.noteTemplate;
-			editor.addEventListener("input", () => { template.noteTemplate = editor.value; refreshPreview(); });
-			editor.addEventListener("change", async () => this.persist());
-			controls.createEl("p", { cls: "setting-item-description", text: "Variables: {{TASKS}}, {{DATE}}, {{DAY}}, {{WEEK}}, {{MONTH}}, {{MONTH_NUMBER}}, {{YEAR}}, {{FILENAME}}, {{REVIEW_TYPE}}. Put {{TASKS}} exactly where the task list should appear." });
+
+			editor.addEventListener("input", () => {
+				template.noteTemplate = editor.value;
+				refreshPreview();
+			});
+
+			editor.addEventListener("change", () => {
+				void this.persist();
+			});
+
+			controls.createEl("p", {
+				cls: "setting-item-description",
+				text: "Variables: {{TASKS}}, {{DATE}}, {{DAY}}, {{WEEK}}, {{MONTH}}, {{MONTH_NUMBER}}, {{YEAR}}, {{FILENAME}}, {{REVIEW_TYPE}}. Put {{TASKS}} exactly where the task list should appear.",
+			});
+
 			refreshPreview();
 		}
 	}
 
 	private renderWorkspaceSection(containerEl: HTMLElement): void {
-		containerEl.createEl("h3", { text: "Workspace" });
+		new Setting(containerEl).setName("Workspace").setHeading();
 
 		new Setting(containerEl)
 			.setName("Excluded tags")
@@ -725,7 +846,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 		description: string
 	): HTMLElement {
 		const section = containerEl.createDiv({ cls: "tasks-nl-settings-section" });
-		section.createEl("h3", { text: title });
+		new Setting(section).setName("").setHeading();
 		section.createEl("p", {
 			text: description,
 			cls: "setting-item-description",

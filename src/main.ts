@@ -1,4 +1,3 @@
-/* eslint-disable obsidianmd/ui/sentence-case */
 import { Editor, moment, Plugin, TFile } from "obsidian";
 import { TaskRepository } from "./repository/TaskRepository";
 import type { Task } from "./models/Task";
@@ -26,7 +25,14 @@ export default class TasksNLPlugin extends Plugin {
 	private statusBarItem?: HTMLElement;
 
 	async onload(): Promise<void> {
-		this.settings = mergeSettings(await this.loadData());
+		const data: unknown = await this.loadData();
+
+		const loadedData =
+			typeof data === "object" && data !== null
+				? (data as Partial<TasksNLSettings>)
+				: null;
+
+		this.settings = mergeSettings(loadedData);
 		this.repository = new TaskRepository(this.app);
 
 		this.registerView(
@@ -104,7 +110,7 @@ export default class TasksNLPlugin extends Plugin {
 			type: TASKS_NL_WORKSPACE_VIEW,
 			active: true,
 		});
-		this.app.workspace.revealLeaf(leaf);
+		void this.app.workspace.revealLeaf(leaf);
 	}
 
 	openTemplatePicker(): void {
@@ -180,7 +186,7 @@ export default class TasksNLPlugin extends Plugin {
 
 	private resolveTemplateFileName(template: TaskTemplate): string {
 		const formatted = moment().format(template.fileNamePattern || "YYYY-MM-DD [Template]");
-		return formatted.replace(/[\/:*?"<>|]/gu, "-").trim() || "Template";
+		return formatted.replace(/[/:*?"<>|\\]/gu, "-").trim() || "Template";
 	}
 
 	private getIsoWeekNumber(value: Date): number {
