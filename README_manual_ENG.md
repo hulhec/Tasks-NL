@@ -1,3 +1,8 @@
+
+<div align="center">
+  <img src="image/logo_task_nl.png" width="150" alt="Task-NL logo">
+</div>
+
 # Tasks NL – English Manual
 
 This manual describes Tasks NL version 0.9.0 for Obsidian. The plugin lets you enter tasks using natural Dutch language, stores them as regular Markdown tasks, and displays them in a GTD-oriented Workspace.

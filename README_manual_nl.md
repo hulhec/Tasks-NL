@@ -1,4 +1,8 @@
 
+<div align="center">
+  <img src="image/logo_task_nl.png" width="150" alt="Task-NL logo">
+</div>
+
 # Tasks NL – Nederlandstalige handleiding
 
 Deze handleiding beschrijft Tasks NL versie 0.9.0 voor Obsidian. De plugin laat je taken in natuurlijke Nederlandse tekst invoeren, bewaart ze als gewone Markdown-taken en toont ze in een GTD-georiënteerde Workspace.

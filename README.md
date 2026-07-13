@@ -1,6 +1,6 @@
-# Task-NL
-
-> Next Level Task Management for Obsidian
+<div align="center">
+  <img src="image/logo_task_nl.png" width="150" alt="Task-NL logo">
+</div>
 
 Tasks NL lets you write tasks naturally in Dutch while producing clean, standardized Markdown compatible with the Obsidian Tasks ecosystem.
 
