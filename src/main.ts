@@ -2,6 +2,7 @@ import { Editor, moment, Plugin, TFile } from "obsidian";
 import { TaskRepository } from "./repository/TaskRepository";
 import type { Task } from "./models/Task";
 import { TaskCreationService } from "./services/TaskCreationService";
+import { RecurringTaskService } from "./services/RecurringTaskService";
 import {
 	mergeSettings,
 	TasksNLSettings,
@@ -19,6 +20,7 @@ import {
 export default class TasksNLPlugin extends Plugin {
 	settings!: TasksNLSettings;
 	repository!: TaskRepository;
+	private recurringTaskService!: RecurringTaskService;
 
 	private ribbonIcon?: HTMLElement;
 	private workspaceRibbonIcon?: HTMLElement;
@@ -34,6 +36,29 @@ export default class TasksNLPlugin extends Plugin {
 
 		this.settings = mergeSettings(loadedData);
 		this.repository = new TaskRepository(this.app);
+		this.recurringTaskService = new RecurringTaskService(this.app);
+
+		this.registerEvent(this.app.vault.on("modify", (file) => {
+			if (file instanceof TFile) void this.recurringTaskService.handleModify(file);
+		}));
+		this.registerEvent(this.app.vault.on("create", (file) => {
+			if (file instanceof TFile && file.extension === "md") {
+				void this.app.vault.cachedRead(file).then((content) =>
+					this.recurringTaskService.remember(file, content)
+				);
+			}
+		}));
+		this.registerEvent(this.app.vault.on("delete", (file) => {
+			this.recurringTaskService.forget(file.path);
+		}));
+		this.registerEvent(this.app.vault.on("rename", (file, oldPath) => {
+			this.recurringTaskService.forget(oldPath);
+			if (file instanceof TFile && file.extension === "md") {
+				void this.app.vault.cachedRead(file).then((content) =>
+					this.recurringTaskService.remember(file, content)
+				);
+			}
+		}));
 
 		this.registerView(
 			TASKS_NL_WORKSPACE_VIEW,
@@ -61,12 +86,24 @@ export default class TasksNLPlugin extends Plugin {
 			callback: () => this.openTaskModal(),
 		});
 
-		this.app.workspace.onLayoutReady(() => void this.checkAutomaticReviews());
+		this.app.workspace.onLayoutReady(() => {
+			void this.recurringTaskService.initialize();
+			void this.checkAutomaticReviews();
+		});
 		this.registerInterval(window.setInterval(() => void this.checkAutomaticReviews(), 60 * 60 * 1000));
 	}
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
+		this.refreshOptionalUi();
+
+		const workspaceViews = this.app.workspace
+			.getLeavesOfType(TASKS_NL_WORKSPACE_VIEW)
+			.map((leaf) => leaf.view)
+			.filter((view): view is TasksNLWorkspaceView => view instanceof TasksNLWorkspaceView);
+		await Promise.all(workspaceViews.map((view) => view.refresh()));
+
+		this.app.workspace.trigger("layout-change");
 	}
 
 	refreshOptionalUi(): void {

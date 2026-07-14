@@ -238,7 +238,7 @@ export class TaskCreationService {
 		 */
 
 		const markdown = this
-			.formatNaturalLanguage(text)
+			.formatEditedTask(text)
 			.replace(
 				/^\s*[-*+]\s+\[[ xX]\]\s*/u,
 				""
@@ -271,13 +271,13 @@ export class TaskCreationService {
 			const currentLine = lines[lineNumber];
 			if (currentLine === undefined) return content;
 			const prefix = currentLine.match(/^(\s*[-*+]\s+\[[ xX]\]\s*)/u)?.[1] ?? "- [ ] ";
-			const markdown = this.formatNaturalLanguage(text).replace(/^\s*[-*+]\s+\[[ xX]\]\s*/u, "");
+			const markdown = this.formatEditedTask(text).replace(/^\s*[-*+]\s+\[[ xX]\]\s*/u, "");
 			lines[lineNumber] = `${prefix}${markdown}`;
 			for (const subtask of editedSubtasks) {
 				const line = lines[subtask.lineNumber];
 				const subPrefix = line?.match(/^(\s*[-*+]\s+\[[ xX]\]\s*)/u)?.[1];
 				if (!line || !subPrefix) continue;
-				const subMarkdown = this.formatNaturalLanguage(subtask.text).replace(/^\s*[-*+]\s+\[[ xX]\]\s*/u, "");
+				const subMarkdown = this.formatEditedTask(subtask.text).replace(/^\s*[-*+]\s+\[[ xX]\]\s*/u, "");
 				lines[subtask.lineNumber] = `${subPrefix}${subMarkdown}`;
 			}
 			if (subtasks.length > 0) this.appendSubtasksToLines(lines, lineNumber, subtasks);
@@ -301,7 +301,8 @@ export class TaskCreationService {
 		let insertLine = rootLine + 1;
 		while (insertLine < lines.length) {
 			const line = lines[insertLine] ?? "";
-			if (isTask(line) && getIndent(line) <= rootIndent) break;
+			if (!line.trim()) break;
+			if (!isTask(line) || getIndent(line) <= rootIndent) break;
 			insertLine += 1;
 		}
 		const childIndent = `${rootIndentText}  `;
@@ -314,7 +315,7 @@ export class TaskCreationService {
 			const currentLine = editor.getLine(subtask.lineNumber);
 			const prefix = currentLine.match(/^(\s*[-*+]\s+\[[ xX]\]\s*)/u)?.[1];
 			if (!prefix) continue;
-			const markdown = this.formatNaturalLanguage(subtask.text)
+			const markdown = this.formatEditedTask(subtask.text)
 				.replace(/^\s*[-*+]\s+\[[ xX]\]\s*/u, "");
 			editor.replaceRange(
 				`${prefix}${markdown}`,
@@ -350,7 +351,8 @@ export class TaskCreationService {
 		let insertLine = rootLine + 1;
 		while (insertLine < editor.lineCount()) {
 			const line = editor.getLine(insertLine);
-			if (isTask(line) && getIndent(line) <= rootIndent) break;
+			if (!line.trim()) break;
+			if (!isTask(line) || getIndent(line) <= rootIndent) break;
 			insertLine += 1;
 		}
 
@@ -370,6 +372,35 @@ export class TaskCreationService {
 				{ line: lastLine, ch: editor.getLine(lastLine).length }
 			);
 		}
+	}
+
+	private formatEditedTask(text: string): string {
+		const explicit = parseTaskLine(`- [ ] ${text.trim()}`);
+		if (!explicit) return this.formatNaturalLanguage(text);
+
+		const parser = new DutchTaskParser(this.settings);
+		const normalizer = new TaskNormalizer(
+			this.settings.defaultTaskTitle,
+			this.settings.keepOriginalTaskText
+		);
+		const natural = normalizer.normalize(parser.parse(explicit.titel));
+		const priority = natural.prioriteit !== "normal" ? natural.prioriteit : explicit.prioriteit;
+		const priorityEmoji = {
+			highest: "🔺", high: "⏫", medium: "🔼", normal: "", low: "🔽", lowest: "⏬",
+		}[priority];
+		const repeat = natural.repeat?.tasksText ?? explicit.herhaling;
+		const date = natural.datum ?? explicit.vervalDatum;
+		const hashtags = Array.from(new Set([...explicit.hashtags, ...natural.hashtags]));
+
+		return [
+			"- [ ]",
+			natural.titel,
+			priorityEmoji,
+			repeat ? `🔁 ${repeat}` : "",
+			repeat && !this.settings.keepCompletedRecurringTask ? "🏁 delete" : "",
+			date ? `📅 ${date}` : "",
+			...hashtags,
+		].filter(Boolean).join(" ");
 	}
 
 	private formatNaturalLanguage(text: string): string {

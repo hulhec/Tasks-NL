@@ -286,3 +286,44 @@ Opens the template picker for weekly reviews, monthly reviews, and other configu
 Creates a new task or edits the task at the current cursor position.
 
 [Enjoying this application? Buy me a coffee](https://buymeacoffee.com/joostvanderhulst)
+
+
+---
+
+## Inspiration
+
+This plugin is inspired by the Obsidian Community Plugin **Tasks**.
+
+Tasks NL can operate completely independently, but it can also be used alongside the Community Tasks plugin. It uses the same task syntax and icons to maximize compatibility.
+
+Icons used (Tasks syntax):
+
+- 📅 Due date
+- ✅ Completion date
+- 🔁 Recurrence
+- 🏁 On completion (`delete` / `keep`)
+- ⏫ ⏬ 🔼 Priority (when used)
+
+This keeps Markdown files readable and compatible with both plugins.
+
+
+## Acknowledgements
+
+Tasks NL is inspired by the excellent **Tasks Community Plugin** for Obsidian.
+
+Tasks NL is an independent project that can operate completely on its own and does not require the Tasks Community Plugin. At the same time, it is fully compatible with the Tasks task format and can also be used alongside the Tasks plugin without conflicts.
+
+To maximize compatibility, Tasks NL uses the same task syntax and icons where applicable, including:
+
+- 📅 Due Date
+- ✅ Completion Date
+- 🔁 Recurrence
+- 🏁 On Completion (`delete` / `keep`)
+- ⏫ High Priority
+- 🔼 Medium Priority
+- 🔽 Low Priority
+
+This compatibility allows users to migrate between both plugins or use them together while keeping their Markdown task files fully compatible.
+
+**Tasks** is an official Obsidian Community Plugin. All credit for the original task format, syntax and concepts belongs to the Tasks project and its contributors. Tasks NL is an independent project inspired by the Tasks plugin and designed to be compatible with its task format.
+

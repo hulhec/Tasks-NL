@@ -269,3 +269,44 @@ Maakt een nieuwe taak of bewerkt de taak waarop de cursor staat.
 
 [Ben je blij met deze toepassing, buy me a coffee](https://buymeacoffee.com/joostvanderhulst)
 
+
+
+---
+
+## Inspiratie
+
+Deze plugin is geïnspireerd op de Obsidian Community Plugin **Tasks**.
+
+Tasks NL werkt volledig zelfstandig, maar kan ook probleemloos naast de Community Plugin Tasks worden gebruikt. De plugin gebruikt dezelfde taaknotatie en iconen voor maximale compatibiliteit.
+
+Gebruikte iconen (Tasks-syntaxis):
+
+- 📅 Due date
+- ✅ Completion date
+- 🔁 Recurrence
+- 🏁 On completion (`delete` / `keep`)
+- ⏫ ⏬ 🔼 Prioriteit (indien gebruikt)
+
+Hierdoor blijven Markdown-bestanden leesbaar en uitwisselbaar tussen beide plugins.
+
+
+## Dankwoord
+
+Tasks NL is geïnspireerd op de uitstekende **Tasks Community Plugin** voor Obsidian.
+
+Tasks NL is een zelfstandig project dat volledig onafhankelijk kan functioneren en de Tasks Community Plugin niet nodig heeft. Tegelijkertijd is de plugin volledig compatibel met het taakformaat van Tasks en kan hij zonder conflicten naast de Tasks Community Plugin worden gebruikt.
+
+Voor een maximale compatibiliteit maakt Tasks NL gebruik van dezelfde taaksyntax en iconen, waaronder:
+
+- 📅 Vervaldatum
+- ✅ Voltooiingsdatum
+- 🔁 Herhaling
+- 🏁 Actie na voltooiing (`delete` / `keep`)
+- ⏫ Hoge prioriteit
+- 🔼 Gemiddelde prioriteit
+- 🔽 Lage prioriteit
+
+Hierdoor kunnen gebruikers eenvoudig overstappen van of naar de Tasks Community Plugin, of beide plugins naast elkaar gebruiken, terwijl de Markdown-bestanden volledig compatibel blijven.
+
+**Tasks** is een officiële Obsidian Community Plugin. Alle waardering voor het oorspronkelijke taakformaat, de syntax en de onderliggende concepten gaat naar het Tasks-project en alle bijdragers. Tasks NL is een zelfstandig project, geïnspireerd door de Tasks-plugin en ontwikkeld om compatibel te zijn met hetzelfde taakformaat.
+
