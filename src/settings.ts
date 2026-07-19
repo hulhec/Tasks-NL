@@ -375,14 +375,23 @@ export class TasksNLSettingTab extends PluginSettingTab {
 	}
 
 	private renderSyncSection(containerEl: HTMLElement): void {
+		const description = new DocumentFragment();
+		description.append(
+			this.settingText(
+				"Tasks NL bewaart instellingen in Obsidian’s standaard pluginbestand data.json. Zet op ieder apparaat bij Instellingen → Sync → Vaultconfiguratie synchroniseren de opties voor communityplugins en plugininstellingen aan. Sluit Obsidian daarna volledig af en start opnieuw. ",
+				"Tasks NL stores settings in Obsidian’s standard plugin data.json file. On every device, enable community plugins and plugin settings under Settings → Sync → Vault configuration sync. Then fully quit and restart Obsidian. "
+			)
+		);
+		const link = description.createEl("a", {
+			text: this.settingText("Open Obsidian Sync-handleiding", "Open the Obsidian Sync guide"),
+			href: "https://obsidian.md/help/sync/settings",
+		});
+		link.setAttr("target", "_blank");
+		link.setAttr("rel", "noopener noreferrer");
+
 		new Setting(containerEl)
 			.setName(this.settingText("Instellingen synchroniseren", "Sync settings"))
-			.setDesc(
-				this.settingText(
-					"Tasks NL gebruikt Obsidian’s standaard data.json. Schakel in Obsidian Sync de synchronisatie van instellingen en communityplugins in. Bestaande projecten, personen, herhalingen en templates worden bij updates nooit overschreven.",
-					"Tasks NL uses Obsidian’s standard data.json. In Obsidian Sync, enable syncing for settings and community plugins. Updates never overwrite existing projects, people, repeat definitions or templates."
-				)
-			);
+			.setDesc(description);
 	}
 
 	private renderGeneralSection(containerEl: HTMLElement): void {

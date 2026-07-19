@@ -3,6 +3,21 @@
 
 <div align="center">
   <img src="image/tasks-nl-v1-banner.png" width="900" alt="Tasks NL Workspace and language support">
+
+
+## Synchronising settings
+
+Tasks NL stores settings in Obsidian’s standard plugin file:
+
+```text
+<Vault>/.obsidian/plugins/tasks-nl/data.json
+```
+
+When using Obsidian Sync, enable community plugins and plugin settings under **Settings → Sync → Vault configuration sync** on **every device**. Wait for sync to finish, fully quit Obsidian, and restart the app. This is especially important on iPhone and iPad.
+
+See the [Obsidian Sync settings guide](https://obsidian.md/help/sync/settings).
+
+Tasks NL does not create a visible settings file among your notes.
 </div>
 
 # Tasks NL – English Manual

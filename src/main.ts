@@ -35,10 +35,12 @@ export default class TasksNLPlugin extends Plugin {
 		this.recurringTaskService = new RecurringTaskService(this.app);
 
 		this.registerEvent(this.app.vault.on("modify", (file) => {
-			if (file instanceof TFile) void this.recurringTaskService.handleModify(file);
+			if (!(file instanceof TFile)) return;
+			void this.recurringTaskService.handleModify(file);
 		}));
 		this.registerEvent(this.app.vault.on("create", (file) => {
-			if (file instanceof TFile && file.extension === "md") {
+			if (!(file instanceof TFile)) return;
+			if (file.extension === "md") {
 				void this.app.vault.cachedRead(file).then((content) =>
 					this.recurringTaskService.remember(file, content)
 				);

@@ -5,11 +5,11 @@ import {
 } from "../settings";
 
 /**
- * Central settings service.
+ * Central settings service using Obsidian's standard plugin storage.
  *
- * Obsidian stores plugin settings in .obsidian/plugins/<plugin-id>/data.json.
- * All plugin features receive the same in-memory settings object from here.
- * Existing user values are preserved; mergeSettings only supplies missing fields.
+ * Obsidian stores this as data.json in the plugin folder. Syncing that file is
+ * handled by Obsidian Sync's vault configuration options; Tasks NL does not
+ * create a second settings file in the visible vault.
  */
 export class SettingsManager {
 	private settings!: TasksNLSettings;
@@ -24,10 +24,6 @@ export class SettingsManager {
 				: null;
 
 		this.settings = mergeSettings(saved);
-
-		// Persist the safely migrated shape. This only adds missing defaults and
-		// never replaces existing projects, people, repeats or templates.
-		await this.plugin.saveData(this.settings);
 		return this.settings;
 	}
 

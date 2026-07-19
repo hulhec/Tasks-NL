@@ -3,6 +3,21 @@
 
 <div align="center">
   <img src="image/tasks-nl-v1-banner.png" width="900" alt="Tasks NL Workspace and language support">
+
+
+## Instellingen synchroniseren
+
+Tasks NL bewaart instellingen in Obsidian’s standaard pluginbestand:
+
+```text
+<Vault>/.obsidian/plugins/tasks-nl/data.json
+```
+
+Gebruik je Obsidian Sync, zet dan op **ieder apparaat** bij **Instellingen → Sync → Vaultconfiguratie synchroniseren** de opties voor communityplugins en plugininstellingen aan. Wacht tot de synchronisatie klaar is, sluit Obsidian volledig af en start de app opnieuw. Dit is vooral op iPhone en iPad belangrijk.
+
+Zie de [Obsidian-handleiding voor Sync-instellingen](https://obsidian.md/help/sync/settings).
+
+Tasks NL maakt geen zichtbaar instellingenbestand aan tussen je notities.
 </div>
 
 # Tasks NL – Nederlandstalige handleiding

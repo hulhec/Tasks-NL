@@ -30,6 +30,19 @@ Choose **NL — Nederlands** or **ENG — English** at the top of **Settings →
 
 <img src="image/i-general.png" width="900" alt="Tasks NL general settings">
 
+
+## Synchronising settings
+
+Tasks NL stores its settings in Obsidian’s standard plugin file:
+
+```text
+<Vault>/.obsidian/plugins/tasks-nl/data.json
+```
+
+When using Obsidian Sync, enable **community plugins** and **plugin settings** under **Settings → Sync → Vault configuration sync** on every device. After the first sync, fully quit and restart Obsidian, especially on iPhone and iPad. See the [Obsidian Sync settings guide](https://obsidian.md/help/sync/settings).
+
+Tasks NL does not create a visible settings file in your notes structure.
+
 ## Configurable recurrence
 
 Each recurrence definition contains:
@@ -85,13 +98,13 @@ Restart Obsidian, then enable **Tasks NL** under Community plugins.
 
 ## Release files
 
-A GitHub release for version `1.0.0` must contain these files as individual assets:
+A GitHub release for version `1.1.1-beta.2` must contain these files as individual assets:
 
 - `main.js`
 - `manifest.json`
 - `styles.css`
 
-The GitHub tag must exactly match the version in `manifest.json`: `1.0.0`.
+The GitHub tag must exactly match the version in `manifest.json`: `1.1.1-beta.2`.
 
 ## Privacy and network use
 
