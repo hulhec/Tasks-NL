@@ -58,14 +58,14 @@ npm run build  PASS
 
 These checks require a real Obsidian installation and cannot be proven by static inspection:
 
-1. Install the GitHub release through BRAT. Done
-2. Test on at least one desktop platform. Done
+1. Install the GitHub release through BRAT.
+2. Test on at least one desktop platform.
 3. Test on iOS/iPadOS and/or Android because `isDesktopOnly` is false.
-4. Test light and dark themes. Done
-5. Test a representative large vault and note startup/Workspace refresh behaviour. Done
-6. Confirm that completing a recurring task produces the intended next occurrence. Done
-7. Confirm that changing a focus position updates the Markdown file and open editor consistently. Done
-8. Confirm that the Community directory renders the README images from the public repository. Done
+4. Test light and dark themes.
+5. Test a representative large vault and note startup/Workspace refresh behaviour.
+6. Confirm that completing a recurring task produces the intended next occurrence.
+7. Confirm that changing a focus position updates the Markdown file and open editor consistently.
+8. Confirm that the Community directory renders the README images from the public repository.
 
 ## Release checklist
 

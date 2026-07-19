@@ -1,10 +1,10 @@
 {
-	"id": "tasks-nl",
-	"name": "Tasks NL",
-	"version": "1.0.0",
-	"minAppVersion": "1.8.7",
-	"description": "Next levvel task management and a GTD workspace for Obsidian.",
-	"author": "Joost van der Hulst",
-	"authorUrl": "https://www.ikstaevenstilbij.nl",
-	"isDesktopOnly": false
+  "id": "tasks-nl",
+  "name": "Tasks NL",
+  "version": "1.0.1-beta.1",
+  "minAppVersion": "1.8.7",
+  "description": "Natural-language task capture and a GTD workspace for Obsidian.",
+  "author": "Joost van der Hulst",
+  "authorUrl": "https://www.ikstaevenstilbij.nl",
+  "isDesktopOnly": false
 }

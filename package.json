@@ -1,6 +1,6 @@
 {
   "name": "tasks-nl",
-  "version": "1.0.0",
+  "version": "1.0.1-beta.1",
   "description": "Natural-language task capture and a GTD workspace for Obsidian.",
   "main": "main.js",
   "type": "module",

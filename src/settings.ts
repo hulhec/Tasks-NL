@@ -340,6 +340,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 		});
 
 		this.renderLanguageSection(containerEl);
+		this.renderSyncSection(containerEl);
 		this.renderGeneralSection(containerEl);
 		this.renderCaptureSection(containerEl);
 		this.renderGTDSection(containerEl);
@@ -370,6 +371,17 @@ export class TasksNLSettingTab extends PluginSettingTab {
 
 	private settingText(nl: string, en: string): string {
 		return this.plugin.settings.settingsLanguage === "en" ? en : nl;
+	}
+
+	private renderSyncSection(containerEl: HTMLElement): void {
+		new Setting(containerEl)
+			.setName(this.settingText("Synchronisatie met mobiel", "Mobile settings sync"))
+			.setDesc(
+				this.settingText(
+					"Projecten, personen, herhalingen en overige instellingen worden automatisch gespiegeld naar .tasks-nl/settings.json in de vault. Laat deze map door Obsidian Sync, iCloud of je andere synchronisatiedienst meenemen.",
+					"Projects, people, repeat definitions and other settings are automatically mirrored to .tasks-nl/settings.json in the vault. Make sure Obsidian Sync, iCloud or your other sync service includes this folder."
+				)
+			);
 	}
 
 	private renderGeneralSection(containerEl: HTMLElement): void {
