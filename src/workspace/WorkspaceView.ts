@@ -393,7 +393,7 @@ export class TasksNLWorkspaceView extends ItemView {
 			{
 				id: "inbox",
 				label: "Inbox",
-				tasks: this.queries.inbox(nonReviewTasks),
+				tasks: this.queries.inbox(nonReviewTasks, [...this.gtdHashtags("waiting"), ...this.gtdHashtags("someday")]),
 			},
 			{
 				id: "today",
@@ -888,7 +888,9 @@ export class TasksNLWorkspaceView extends ItemView {
 			definitions.filter(
 				(item) => item.definition?.type === "project"
 			),
-			"tasks-nl-workspace-project"
+			"tasks-nl-workspace-project",
+			undefined,
+			1
 		);
 		//Person
 		this.renderMetadataColumn(
@@ -896,7 +898,9 @@ export class TasksNLWorkspaceView extends ItemView {
 			definitions.filter(
 				(item) => item.definition?.type === "person"
 			),
-			"tasks-nl-workspace-person"
+			"tasks-nl-workspace-person",
+			undefined,
+			2
 		);
 		//GTD
 		this.renderMetadataColumn(
@@ -927,13 +931,14 @@ export class TasksNLWorkspaceView extends ItemView {
 			definition?: MetadataDefinition;
 		}>,
 		className: string,
-		sectionId?: WorkspaceSectionId
+		sectionId?: WorkspaceSectionId,
+		maxItems = 1
 	): void {
 		const column = row.createSpan({
 			cls: `tasks-nl-workspace-meta-column ${className}`,
 		});
 
-		for (const item of items.slice(0, 1)) {
+		for (const item of items.slice(0, maxItems)) {
 			const definition = item.definition;
 
 			let label =

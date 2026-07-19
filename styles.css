@@ -389,7 +389,7 @@
 	margin-top: -20px;
 	overflow-y: auto;
 	background: var(--background-primary);
-	font-size: var(--font-ui-small);
+	font-size: var(--font-ui-normal);
 }
 
 .tasks-nl-workspace-toolbar {
@@ -597,7 +597,7 @@
 	background: transparent;
 	color: var(--text-normal);
 	box-shadow: none;
-	font-size: var(--font-ui-n);
+	font-size: var(--font-ui-normal);
 	text-align: left;
 	white-space: nowrap;
 	cursor: pointer;
@@ -654,7 +654,7 @@
 
 .tasks-nl-workspace-priority,
 .tasks-nl-workspace-recurring {
-	font-size: var(--font-ui-small);
+	font-size: var(--font-ui-normal);
 }
 
 .tasks-nl-workspace-source {
@@ -1173,3 +1173,58 @@
 		border-left: 0;
 	}
 }
+
+/* Mobile: iPad en telefoon */
+@media (max-width: 768px) {
+	.tasks-nl-task-modal {
+		position: fixed;
+		inset: max(env(safe-area-inset-top), 8px) 8px max(env(safe-area-inset-bottom), 8px);
+		width: auto;
+		max-width: none;
+		max-height: none;
+		margin: 0;
+		transform: none;
+	}
+	.tasks-nl-task-modal .modal-content {
+		max-height: calc(100dvh - 32px);
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+	.tasks-nl-task-modal .setting-item {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 6px;
+	}
+	.tasks-nl-task-modal .setting-item-info {
+		flex: 0 0 auto;
+		width: 100%;
+	}
+	.tasks-nl-preview-metadata,
+	.tasks-nl-workspace-searchrow {
+		grid-template-columns: 1fr;
+	}
+	.tasks-nl-workspace-filterbar {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.tasks-nl-table {
+		min-width: 0;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+	.tasks-nl-workspace-toolbar {
+		top: env(safe-area-inset-top);
+	}
+	.tasks-nl-workspace-task-title,
+	.tasks-nl-workspace-tag {
+		overflow-wrap: anywhere;
+	}
+	button,
+	input,
+	select,
+	textarea {
+		touch-action: manipulation;
+	}
+}
+
+/* Ruimte tussen maximaal twee persoonsbadges in de Workspace. */
+.tasks-nl-workspace-person { gap: 0.35rem; }

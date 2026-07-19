@@ -20,6 +20,11 @@ export interface PersonDefinition {
 	hashtag: string;
 }
 
+export interface RepeatDefinition {
+	input: string;
+	tasksText: string;
+}
+
 export interface TaskTemplate {
 	id: string;
 	name: string;
@@ -34,7 +39,10 @@ export interface TaskTemplate {
 	autoCreateWeekday?: number;
 }
 
+export type SettingsLanguage = "nl" | "en";
+
 export interface TasksNLSettings {
+	settingsLanguage: SettingsLanguage;
 	defaultTaskTitle: string;
 	keepOriginalTaskText: boolean;
 	keepCompletedRecurringTask: boolean;
@@ -59,10 +67,12 @@ export interface TasksNLSettings {
 	gtdDefinitions: GTDDefinition[];
 	projectDefinitions: ProjectDefinition[];
 	personDefinitions: PersonDefinition[];
+	repeatDefinitions: RepeatDefinition[];
 	taskTemplates: TaskTemplate[];
 }
 
 export const DEFAULT_SETTINGS: TasksNLSettings = {
+	settingsLanguage: "nl",
 	defaultTaskTitle: "Task",
 	keepOriginalTaskText: false,
 	keepCompletedRecurringTask: false,
@@ -105,6 +115,12 @@ export const DEFAULT_SETTINGS: TasksNLSettings = {
 			hashtag: "#someday-maybe",
 			synonyms: ["ooit", "misschien", "someday", "maybe"],
 		},
+	],
+	repeatDefinitions: [
+		{ input: "iedere week", tasksText: "every week" },
+		{ input: "elke week", tasksText: "every week" },
+		{ input: "iedere maand", tasksText: "every month" },
+		{ input: "elke maand", tasksText: "every month" },
 	],
 	projectDefinitions: [
 		{
@@ -213,6 +229,7 @@ export function mergeSettings(saved: Partial<TasksNLSettings> | null): TasksNLSe
 	const source = saved ?? {};
 
 	return {
+		settingsLanguage: source.settingsLanguage === "en" ? "en" : "nl",
 		defaultTaskTitle:
 			source.defaultTaskTitle?.trim() || DEFAULT_SETTINGS.defaultTaskTitle,
 		keepOriginalTaskText:
@@ -247,6 +264,12 @@ export function mergeSettings(saved: Partial<TasksNLSettings> | null): TasksNLSe
 			alias: item.alias ?? "",
 			hashtag: normalizeHashtag(item.hashtag ?? "#project"),
 		})),
+		repeatDefinitions: (
+			source.repeatDefinitions ?? DEFAULT_SETTINGS.repeatDefinitions
+		).map((item) => ({
+			input: item.input ?? "",
+			tasksText: item.tasksText ?? "every week",
+		})).filter((item) => item.input.trim() && item.tasksText.trim()),
 		personDefinitions: (
 			source.personDefinitions ?? DEFAULT_SETTINGS.personDefinitions
 		).map((item) => ({
@@ -316,9 +339,11 @@ export class TasksNLSettingTab extends PluginSettingTab {
 			text: "Next Level Productivity for Obsidian",
 		});
 
+		this.renderLanguageSection(containerEl);
 		this.renderGeneralSection(containerEl);
 		this.renderCaptureSection(containerEl);
 		this.renderGTDSection(containerEl);
+		this.renderRepeatSection(containerEl);
 		this.renderProjectSection(containerEl);
 		this.renderPeopleSection(containerEl);
 		this.renderTemplatesSection(containerEl);
@@ -326,13 +351,34 @@ export class TasksNLSettingTab extends PluginSettingTab {
 		this.renderAboutSection(containerEl);
 	}
 
+	private renderLanguageSection(containerEl: HTMLElement): void {
+		new Setting(containerEl)
+			.setName("Instellingentaal / Settings language")
+			.setDesc(this.settingText("Kies NL voor Nederlandse uitleg of ENG voor Engelse uitleg. Deze keuze wijzigt de uitlegteksten in de instellingen; de taakinvoer blijft instelbaar.", "Choose NL for Dutch explanations or ENG for English explanations. This choice changes the explanatory settings text; task input remains configurable."))
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("nl", "NL — Nederlands")
+					.addOption("en", "ENG — English")
+					.setValue(this.plugin.settings.settingsLanguage)
+					.onChange(async (value) => {
+						this.plugin.settings.settingsLanguage = value === "en" ? "en" : "nl";
+						await this.persist();
+						this.display();
+					})
+			);
+	}
+
+	private settingText(nl: string, en: string): string {
+		return this.plugin.settings.settingsLanguage === "en" ? en : nl;
+	}
+
 	private renderGeneralSection(containerEl: HTMLElement): void {
 		;
 
 		new Setting(containerEl)
-			.setName("Default task title")
+			.setName(this.settingText("Standaard taaktitel", "Default task title"))
 			.setDesc(
-				"Used when recognised input contains metadata only."
+				this.settingText("Wordt gebruikt wanneer de herkende invoer alleen metadata bevat.", "Used when recognised input contains metadata only.")
 			)
 			.addText((text) =>
 				text
@@ -346,9 +392,9 @@ export class TasksNLSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Keep original task text")
+			.setName(this.settingText("Oorspronkelijke taaktekst behouden", "Keep original task text"))
 			.setDesc(
-				"Keep recognised date, priority and dictionary terms in the title."
+				this.settingText("Behoud herkende datum-, prioriteits- en woordenboektermen in de titel.", "Keep recognised date, priority and dictionary terms in the title.")
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -362,12 +408,12 @@ export class TasksNLSettingTab extends PluginSettingTab {
 
 
 	private renderCaptureSection(containerEl: HTMLElement): void {
-		new Setting(containerEl).setName("Capture").setHeading();
+		new Setting(containerEl).setName(this.settingText("Taakinvoer", "Capture")).setHeading();
 
 		new Setting(containerEl)
-			.setName("Keep completed recurring task")
+			.setName(this.settingText("Voltooide herhaaltaak behouden", "Keep completed recurring task"))
 			.setDesc(
-				"Off: the Tasks plugin removes the completed occurrence and keeps only the next one. On: completed occurrences remain as history."
+				this.settingText("Uit: de Tasks-plugin verwijdert de voltooide herhaling en bewaart alleen de volgende. Aan: voltooide herhalingen blijven als historie staan.", "Off: the Tasks plugin removes the completed occurrence and keeps only the next one. On: completed occurrences remain as history.")
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -379,8 +425,8 @@ export class TasksNLSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Show ribbon icon")
-			.setDesc("Show a Tasks NL button in the left ribbon.")
+			.setName(this.settingText("Lintpictogram tonen", "Show ribbon icon"))
+			.setDesc(this.settingText("Toon een Tasks NL-knop in het linker lint.", "Show a Tasks NL button in the left ribbon."))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.showRibbonIcon)
@@ -392,8 +438,8 @@ export class TasksNLSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Show Workspace icon")
-			.setDesc("Show a Tasks NL Workspace button in the left ribbon.")
+			.setName(this.settingText("Workspace-pictogram tonen", "Show Workspace icon"))
+			.setDesc(this.settingText("Toon een Tasks NL Workspace-knop in het linker lint.", "Show a Tasks NL Workspace button in the left ribbon."))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.showWorkspaceRibbonIcon)
@@ -405,8 +451,8 @@ export class TasksNLSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Show status bar item")
-			.setDesc("Show Tasks NL in the status bar.")
+			.setName(this.settingText("Statusbalkitem tonen", "Show status bar item"))
+			.setDesc(this.settingText("Toon Tasks NL in de statusbalk.", "Show Tasks NL in the status bar."))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.showStatusBarItem)
@@ -418,8 +464,8 @@ export class TasksNLSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Show live preview")
-			.setDesc("Show the interpreted task while typing.")
+			.setName(this.settingText("Livevoorbeeld tonen", "Show live preview"))
+			.setDesc(this.settingText("Toon tijdens het typen hoe de taak wordt geïnterpreteerd.", "Show the interpreted task while typing."))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.showPreview)
@@ -430,10 +476,44 @@ export class TasksNLSettingTab extends PluginSettingTab {
 			);
 	}
 
-	private renderTemplatesSection(containerEl: HTMLElement): void {
-		new Setting(containerEl).setName("Reviews").setHeading();
+	private renderRepeatSection(containerEl: HTMLElement): void {
+		new Setting(containerEl).setName(this.settingText("Herhalingsopdrachten", "Recurrence commands")).setHeading();
 		containerEl.createEl("p", {
-			text: "Configure the weekly and monthly review notes. The preview updates immediately.",
+			text: this.settingText(
+				"Voer links de tekst in die je wilt typen en rechts de Engelse Tasks-instructie. Enkelvoud en meervoud worden herkend, bijvoorbeeld ‘elke week’, ‘elke twee weken’ en ‘elke drie maanden’.",
+				"Enter the phrase you want to type in the left field and the English Tasks recurrence instruction in the right field. Singular and plural intervals are supported, for example ‘every week’, ‘every two weeks’, and ‘every three months’."
+			),
+			cls: "setting-item-description",
+		});
+		for (const [index, definition] of this.plugin.settings.repeatDefinitions.entries()) {
+			new Setting(containerEl)
+				.setName(`${this.settingText("Herhaling", "Recurrence")} ${index + 1}`)
+				.setDesc(this.settingText("Veld 1: invoertekst. Veld 2: Engelse Tasks-instructie.", "Field 1: input phrase. Field 2: English Tasks instruction."))
+				.addText((text) => text.setPlaceholder("volgende week").setValue(definition.input).onChange(async (value) => {
+					definition.input = value;
+					await this.persist();
+				}))
+				.addText((text) => text.setPlaceholder("every week").setValue(definition.tasksText).onChange(async (value) => {
+					definition.tasksText = value;
+					await this.persist();
+				}))
+				.addButton((button) => button.setButtonText(this.settingText("Verwijder", "Remove")).onClick(async () => {
+					this.plugin.settings.repeatDefinitions.splice(index, 1);
+					await this.persist();
+					this.display();
+				}));
+		}
+		new Setting(containerEl).addButton((button) => button.setButtonText(this.settingText("Herhaling toevoegen", "Add recurrence")).setCta().onClick(async () => {
+			this.plugin.settings.repeatDefinitions.push({ input: "", tasksText: "every week" });
+			await this.persist();
+			this.display();
+		}));
+	}
+
+	private renderTemplatesSection(containerEl: HTMLElement): void {
+		new Setting(containerEl).setName(this.settingText("Evaluaties", "Reviews")).setHeading();
+		containerEl.createEl("p", {
+			text: this.settingText("Configureer de wekelijkse en maandelijkse evaluatienotities. Het voorbeeld wordt direct bijgewerkt.", "Configure the weekly and monthly review notes. The preview updates immediately."),
 			cls: "setting-item-description",
 		});
 
@@ -442,7 +522,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 			const controls = layout.createDiv({ cls: "tasks-nl-review-settings-controls" });
 			const preview = layout.createDiv({ cls: "tasks-nl-review-settings-preview" });
 			new Setting(controls).setName("").setHeading();
-			new Setting(preview).setName("Preview").setHeading();
+			new Setting(preview).setName(this.settingText("Voorbeeld", "Preview")).setHeading();
 
 			const refreshPreview = (): void => {
 				preview.querySelectorAll(":scope > pre, :scope > .tasks-nl-review-preview-file").forEach((el) => el.remove());
@@ -462,8 +542,8 @@ export class TasksNLSettingTab extends PluginSettingTab {
 				preview.createEl("pre", { text: rendered });
 			};
 			new Setting(controls)
-				.setName("Automatic creation")
-				.setDesc("Create the review automatically on the selected weekday.")
+				.setName(this.settingText("Automatisch aanmaken", "Automatic creation"))
+				.setDesc(this.settingText("Maak de evaluatie automatisch aan op de geselecteerde weekdag.", "Create the review automatically on the selected weekday."))
 				.addToggle((toggle) =>
 					toggle
 						.setValue(template.autoCreate ?? false)
@@ -474,7 +554,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 				);
 
 			new Setting(controls)
-				.setName("Weekday")
+				.setName(this.settingText("Weekdag", "Weekday"))
 				.setDesc(
 					"Friday is the default. The monthly review uses the last selected weekday in the month.",
 				)
@@ -500,8 +580,8 @@ export class TasksNLSettingTab extends PluginSettingTab {
 				});
 
 			new Setting(controls)
-				.setName("Folder in vault")
-				.setDesc("Both review types may use the same folder.")
+				.setName(this.settingText("Map in kluis", "Folder in vault"))
+				.setDesc(this.settingText("Beide evaluatietypen mogen dezelfde map gebruiken.", "Both review types may use the same folder."))
 				.addText((text) =>
 					text
 						.setPlaceholder("Reviews")
@@ -516,7 +596,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 				);
 
 			new Setting(controls)
-				.setName("Filename format")
+				.setName(this.settingText("Bestandsnaamformaat", "Filename format"))
 				.setDesc(
 					"Moment syntax. Literal text goes in square brackets. Example shown on the right.",
 				)
@@ -534,8 +614,8 @@ export class TasksNLSettingTab extends PluginSettingTab {
 				);
 
 			new Setting(controls)
-				.setName("Main task")
-				.setDesc("Use {{FILENAME}} to insert the generated note name.")
+				.setName(this.settingText("Hoofdtaak", "Main task"))
+				.setDesc(this.settingText("Gebruik {{FILENAME}} om de gegenereerde notitienaam in te voegen.", "Use {{FILENAME}} to insert the generated note name."))
 				.addText((text) =>
 					text
 						.setValue(template.mainTask)
@@ -610,8 +690,8 @@ export class TasksNLSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName("Workspace").setHeading();
 
 		new Setting(containerEl)
-			.setName("Excluded tags")
-			.setDesc("Tasks with these tags are hidden outside inbox and actual. Separate multiple tags with commas.")
+			.setName(this.settingText("Uitgesloten tags", "Excluded tags"))
+			.setDesc(this.settingText("Taken met deze tags worden buiten Inbox en Actueel verborgen. Scheid meerdere tags met komma’s.", "Tasks with these tags are hidden outside Inbox and Actual. Separate multiple tags with commas."))
 			.addText((text) => text
 				.setPlaceholder("#reminders, #archive")
 				.setValue(this.plugin.settings.workspaceExcludedTags.join(", "))
@@ -723,7 +803,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 		const section = this.createSection(
 			containerEl,
 			"Projects",
-			"A project is recognised by its name, abbreviation or existing hashtag."
+			this.settingText("Een project wordt herkend aan naam, afkorting of bestaande hashtag. Gebruik voor elk project een unieke hashtag.", "A project is recognised by its name, abbreviation, or existing hashtag. Use a unique hashtag for every project.")
 		);
 
 		const table = this.createTable(section, "tasks-nl-table--projects", [
@@ -761,11 +841,18 @@ export class TasksNLSettingTab extends PluginSettingTab {
 			});
 		}
 
-		this.createAddButton(section, "Add project", async () => {
+		this.createAddButton(section, this.settingText("Project toevoegen", "Add project"), async () => {
+			const used = new Set(this.plugin.settings.projectDefinitions.map((item) => normalizeHashtag(item.hashtag)));
+			let number = this.plugin.settings.projectDefinitions.length + 1;
+			let hashtag = `#new-project-${number}`;
+			while (used.has(hashtag)) {
+				number += 1;
+				hashtag = `#new-project-${number}`;
+			}
 			this.plugin.settings.projectDefinitions.push({
-				name: "New project",
+				name: `New project ${number}`,
 				alias: "",
-				hashtag: "#nieuw-project",
+				hashtag,
 			});
 			await this.persist(true);
 		});
@@ -775,7 +862,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 		const section = this.createSection(
 			containerEl,
 			"People",
-			"A person is recognised by first name, full name, abbreviation or hashtag."
+			this.settingText("Een persoon wordt herkend aan voornaam, volledige naam, afkorting of hashtag. Per taak worden maximaal twee personen verwerkt en in de Workspace getoond.", "A person is recognised by first name, full name, abbreviation, or hashtag. A maximum of two people is processed per task and shown in the Workspace.")
 		);
 
 		const table = this.createTable(section, "tasks-nl-table--people", [

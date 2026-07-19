@@ -24,11 +24,12 @@ export class DutchTaskParser {
 	private readonly dateRecognizer = new DateRecognizer();
 	private readonly dateResolver = new DateResolver();
 	private readonly priorityRecognizer = new PriorityRecognizer();
-	private readonly repeatRecognizer = new RepeatRecognizer();
+	private readonly repeatRecognizer: RepeatRecognizer;
 	private readonly repeatResolver = new RepeatResolver();
 	private readonly dictionaryEngine: DictionaryEngine;
 
 	constructor(settings: TasksNLSettings) {
+		this.repeatRecognizer = new RepeatRecognizer(settings.repeatDefinitions);
 		this.dictionaryEngine = new DictionaryEngine(settings);
 	}
 

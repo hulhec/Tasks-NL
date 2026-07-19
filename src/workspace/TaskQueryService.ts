@@ -63,10 +63,17 @@ export class TaskQueryService {
 			);
 	}
 
-	inbox(tasks: Task[]): Task[] {
+	inbox(tasks: Task[], statusHashtags: string[] = []): Task[] {
+		const excludedStatuses = new Set(
+			statusHashtags.map((tag) => tag.toLocaleLowerCase("nl-NL"))
+		);
 		return this.sort(
 			this.open(tasks).filter(
-				(task) => !task.vervalDatum && task.hashtags.length === 0
+				(task) =>
+					!task.vervalDatum &&
+					!task.hashtags.some((tag) =>
+						excludedStatuses.has(tag.toLocaleLowerCase("nl-NL"))
+					)
 			)
 		);
 	}

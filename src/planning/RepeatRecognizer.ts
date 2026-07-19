@@ -12,6 +12,7 @@
  */
 
 import { RepeatPosition, RepeatRule, RepeatUnit } from "./RepeatRule";
+import { RepeatDefinition } from "../settings";
 
 const WEEKDAYS: Record<string, { index: number; english: string }> = {
 	zondag: { index: 0, english: "Sunday" },
@@ -24,11 +25,17 @@ const WEEKDAYS: Record<string, { index: number; english: string }> = {
 };
 
 export class RepeatRecognizer {
+	constructor(private readonly definitions: RepeatDefinition[] = []) {}
+
 	recognize(input: string): RepeatRule | undefined {
 		const normalized = input
 			.toLocaleLowerCase("nl-NL")
 			.replace(/\s+/gu, " ")
 			.trim();
+
+
+		const configured = this.recognizeConfigured(normalized);
+		if (configured) return configured;
 
 		const monthlyWeekday = normalized.match(
 			/\b(?:iedere|elke|elk)\s+(eerste|laatste)\s+(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)(?:\s+van\s+de\s+maand)?\b/u
@@ -82,6 +89,31 @@ export class RepeatRecognizer {
 			every,
 			unit,
 		};
+	}
+
+	private recognizeConfigured(normalizedInput: string): RepeatRule | undefined {
+		for (const definition of this.definitions) {
+			const input = definition.input.trim().toLocaleLowerCase("nl-NL");
+			if (!input || !this.containsPhrase(normalizedInput, input)) continue;
+			const parsed = this.parseTasksText(definition.tasksText.trim());
+			if (!parsed) continue;
+			return { ...parsed, originalText: definition.input.trim(), tasksText: definition.tasksText.trim() };
+		}
+		return undefined;
+	}
+
+	private containsPhrase(input: string, phrase: string): boolean {
+		const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		return new RegExp(`(^|[\\s,.;:!?()])${escaped}(?=$|[\\s,.;:!?()])`, "u").test(input);
+	}
+
+	private parseTasksText(value: string): Omit<RepeatRule, "originalText" | "tasksText"> | undefined {
+		const normalized = value.toLocaleLowerCase("en-US").replace(/\s+/gu, " ").trim();
+		const match = normalized.match(/^every\s+(?:(\d+)\s+)?(day|days|week|weeks|month|months|year|years)$/u);
+		if (!match?.[2]) return undefined;
+		const every = Number(match[1] ?? "1");
+		const unit = match[2].replace(/s$/u, "") as RepeatUnit;
+		return Number.isFinite(every) && every > 0 ? { every, unit } : undefined;
 	}
 
 	private toUnit(value: string): RepeatUnit | undefined {

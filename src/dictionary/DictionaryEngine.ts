@@ -33,8 +33,10 @@ export class DictionaryEngine {
 		const normalizedInput = this.normalize(input);
 		const matches: DictionaryMatch[] = [];
 		const usedHashtags = new Set<string>();
+		let personMatches = 0;
 
 		for (const entry of this.entries) {
+			if (entry.type === "person" && personMatches >= 2) continue;
 			const terms = [...entry.terms]
 				.map((term) => term.trim())
 				.filter(Boolean)
@@ -54,6 +56,7 @@ export class DictionaryEngine {
 					hashtag,
 					matchedText: term,
 				});
+				if (entry.type === "person") personMatches += 1;
 				break;
 			}
 		}
