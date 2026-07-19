@@ -1347,3 +1347,102 @@
 		display: none;
 	}
 }
+
+
+/* Mobile workspace refinements — 1.0.1-beta.2 */
+.is-mobile .tasks-nl-workspace {
+	margin-top: 0;
+	padding: 0 6px max(12px, env(safe-area-inset-bottom));
+	overflow-x: hidden;
+}
+
+.is-mobile .tasks-nl-workspace-toolbar {
+	position: static;
+	top: auto;
+	z-index: auto;
+	margin: 0 0 10px;
+	padding: 6px;
+	border-radius: var(--radius-m);
+	box-shadow: none;
+}
+
+.is-mobile .tasks-nl-workspace-header {
+	height: 28px;
+}
+
+.is-mobile .tasks-nl-workspace-filterbar {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 6px;
+	margin: 6px 0;
+}
+
+.is-mobile .tasks-nl-workspace-searchrow {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 6px;
+}
+
+.is-mobile .tasks-nl-workspace-tab,
+.is-mobile .tasks-nl-workspace-search,
+.is-mobile .tasks-nl-workspace-project-filter,
+.is-mobile .tasks-nl-workspace-person-filter,
+.is-mobile .tasks-nl-workspace-hidden-filter {
+	height: 34px;
+	min-height: 34px;
+	padding: 4px 7px;
+	font-size: var(--font-ui-smaller);
+}
+
+.is-mobile .tasks-nl-workspace-taskrow {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.is-mobile .tasks-nl-workspace-project,
+.is-mobile .tasks-nl-workspace-person,
+.is-mobile .tasks-nl-workspace-gtd {
+	justify-content: flex-start;
+}
+
+.is-mobile .tasks-nl-workspace-badge {
+	font-size: var(--font-ui-smaller);
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+	.is-mobile .tasks-nl-workspace {
+		padding-inline:
+			max(8px, env(safe-area-inset-left))
+			max(8px, env(safe-area-inset-right));
+	}
+
+	.is-mobile .tasks-nl-workspace-toolbar {
+		padding: 4px 6px;
+	}
+
+	.is-mobile .tasks-nl-workspace-filterbar {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+		margin: 4px 0;
+	}
+
+	.is-mobile .tasks-nl-workspace-searchrow {
+		grid-template-columns: minmax(150px, 1.2fr) repeat(3, minmax(120px, 1fr));
+	}
+
+	.is-mobile .tasks-nl-workspace-taskrow {
+		grid-template-columns:
+			22px 28px minmax(180px, 1fr)
+			22px 22px 22px
+			minmax(90px, .65fr)
+			minmax(120px, .8fr)
+			minmax(64px, .45fr)
+			78px;
+		column-gap: 6px;
+		min-height: 44px;
+		padding: 4px 3px;
+	}
+
+	.is-mobile .tasks-nl-workspace-task-title {
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		overflow: hidden;
+	}
+}

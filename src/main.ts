@@ -26,7 +26,8 @@ export default class TasksNLPlugin extends Plugin {
 	private workspaceRibbonIcon?: HTMLElement;
 	private statusBarItem?: HTMLElement;
 
-	private readonly syncedSettingsPath = ".tasks-nl/settings.json";
+	private readonly syncedSettingsPath = "Tasks NL/settings.json";
+	private readonly legacySyncedSettingsPath = ".tasks-nl/settings.json";
 	private writingSyncedSettings = false;
 
 	async onload(): Promise<void> {
@@ -127,25 +128,27 @@ export default class TasksNLPlugin extends Plugin {
 	}
 
 	private async loadSyncedSettings(): Promise<Partial<TasksNLSettings> | null> {
-		const file = this.app.vault.getAbstractFileByPath(this.syncedSettingsPath);
-		if (!(file instanceof TFile)) return null;
+		for (const path of [this.syncedSettingsPath, this.legacySyncedSettingsPath]) {
+			const file = this.app.vault.getAbstractFileByPath(path);
+			if (!(file instanceof TFile)) continue;
 
-		try {
-			const content = await this.app.vault.cachedRead(file);
-			const parsed: unknown = JSON.parse(content);
-			return typeof parsed === "object" && parsed !== null
-				? parsed
-				: null;
-		} catch (error) {
-			console.error("Tasks NL could not read synced settings", error);
-			return null;
+			try {
+				const content = await this.app.vault.cachedRead(file);
+				const parsed: unknown = JSON.parse(content);
+				if (typeof parsed === "object" && parsed !== null) {
+					return parsed;
+				}
+			} catch (error) {
+				console.error(`Tasks NL could not read synced settings from ${path}`, error);
+			}
 		}
+		return null;
 	}
 
 	private async writeSyncedSettings(): Promise<void> {
 		this.writingSyncedSettings = true;
 		try {
-			const folder = ".tasks-nl";
+			const folder = "Tasks NL";
 			if (!this.app.vault.getAbstractFileByPath(folder)) {
 				await this.app.vault.createFolder(folder);
 			}
