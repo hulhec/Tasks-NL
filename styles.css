@@ -1446,3 +1446,59 @@
 		overflow: hidden;
 	}
 }
+
+/* Tasks NL 1.1.0 — mobile-only readability.
+   Desktop rules above remain unchanged. */
+@media (max-width: 768px) {
+	.is-mobile .tasks-nl-workspace-taskrow {
+		grid-template-columns: 22px 28px minmax(0, 1fr) 26px 26px 64px;
+		grid-template-areas:
+			"check focus title priority recurring date"
+			". . project project project project"
+			". . person person gtd gtd";
+		min-height: 72px;
+		height: auto;
+		align-items: center;
+		row-gap: 5px;
+		overflow: visible;
+	}
+
+	.is-mobile .tasks-nl-workspace-project,
+	.is-mobile .tasks-nl-workspace-person,
+	.is-mobile .tasks-nl-workspace-gtd {
+		min-width: 0;
+		overflow: visible;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+
+	.is-mobile .tasks-nl-workspace-meta-column .tasks-nl-workspace-badge {
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.is-mobile .tasks-nl-workspace-task-title {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+	.is-mobile .tasks-nl-workspace-taskrow {
+		grid-template-columns: 22px 28px minmax(0, 1fr) 26px 26px 72px;
+		grid-template-areas:
+			"check focus title priority recurring date"
+			". . project project person person"
+			". . gtd gtd gtd gtd";
+		min-height: 70px;
+		height: auto;
+	}
+
+	.is-mobile .tasks-nl-workspace-searchrow {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}

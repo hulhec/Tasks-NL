@@ -73,14 +73,14 @@ export interface TasksNLSettings {
 
 export const DEFAULT_SETTINGS: TasksNLSettings = {
 	settingsLanguage: "nl",
-	defaultTaskTitle: "Task",
+	defaultTaskTitle: "Taak",
 	keepOriginalTaskText: false,
 	keepCompletedRecurringTask: false,
 	showRibbonIcon: false,
 	showWorkspaceRibbonIcon: true,
 	showStatusBarItem: false,
 	showPreview: true,
-	workspaceExcludedTags: ["#reminders"],
+	workspaceExcludedTags: ["#reminder"],
 	workspaceWidgets: {
 		today: true,
 		thisWeek: true,
@@ -117,16 +117,16 @@ export const DEFAULT_SETTINGS: TasksNLSettings = {
 		},
 	],
 	repeatDefinitions: [
-		{ input: "iedere week", tasksText: "every week" },
 		{ input: "elke week", tasksText: "every week" },
-		{ input: "iedere maand", tasksText: "every month" },
+		{ input: "elke twee weken", tasksText: "every 2 weeks" },
 		{ input: "elke maand", tasksText: "every month" },
+		{ input: "elk jaar", tasksText: "every year" },
 	],
 	projectDefinitions: [
 		{
-			name: "CRM",
-			alias: "crm",
-			hashtag: "#crm",
+			name: "Voorbeeldproject",
+			alias: "voorbeeld",
+			hashtag: "#voorbeeld-project",
 		},
 	],
 	taskTemplates: [
@@ -192,10 +192,10 @@ Tekst
 	],
 	personDefinitions: [
 		{
-			firstName: "Peter",
+			firstName: "Voorbeeldpersoon",
 			lastName: "",
-			alias: "peter",
-			hashtag: "#peter",
+			alias: "voorbeeld",
+			hashtag: "#voorbeeld-persoon",
 		},
 	],
 };
@@ -279,31 +279,32 @@ export function mergeSettings(saved: Partial<TasksNLSettings> | null): TasksNLSe
 			hashtag: normalizeHashtag(item.hashtag ?? "#persoon"),
 		})),
 		taskTemplates: (() => {
-			const savedTemplates = source.taskTemplates ?? [];
-			const reviewTemplates = DEFAULT_SETTINGS.taskTemplates.map((fallback) => savedTemplates.find((item) => item.id === fallback.id) ?? fallback);
-			return reviewTemplates.map((item, index) => {
-				let mainTask = item.mainTask || "Task";
-				// Migrate the first template implementation without overwriting user edits.
-				if (item.id === "week-review" && mainTask === "Week review {{date}} weekly") {
-					mainTask = "Week review week {{week}}";
+			const savedTemplates = Array.isArray(source.taskTemplates)
+				? source.taskTemplates
+				: [];
+			const combined = [...savedTemplates];
+
+			for (const fallback of DEFAULT_SETTINGS.taskTemplates) {
+				if (!combined.some((item) => item.id === fallback.id)) {
+					combined.push(fallback);
 				}
-				if (item.id === "month-review" && mainTask === "Month review {{month}} monthly") {
-					mainTask = "Month review {{month}}";
-				}
-				return {
-					id: item.id || `template-${index + 1}`,
-					name: item.name || "Template",
-					icon: item.icon || "list-checks",
-					mainTask,
-					subtasks: Array.isArray(item.subtasks) ? item.subtasks : [],
-					fileNamePattern: item.fileNamePattern || (item.id === "week-review" ? "[Weekreview] WW YYYY" : item.id === "month-review" ? "[Maandreview] MMMM YYYY" : "YYYY-MM-DD [Review]"),
-					folderPath: item.folderPath || "Reviews",
-					noteTemplate: item.noteTemplate || `##### Tasks\n\n{{tasks}}\n##### New tasks after the review\n\n\n##### Summary\n\n`,
-					builtIn: item.builtIn ?? false,
-					autoCreate: item.autoCreate ?? false,
-					autoCreateWeekday: item.autoCreateWeekday ?? 5,
-				};
-			});
+			}
+
+			return combined.map((item, index) => ({
+				id: item.id || `template-${index + 1}`,
+				name: item.name || "Template",
+				icon: item.icon || "list-checks",
+				mainTask: item.mainTask || "Task",
+				subtasks: Array.isArray(item.subtasks) ? item.subtasks : [],
+				fileNamePattern: item.fileNamePattern || "YYYY-MM-DD [Review]",
+				folderPath: item.folderPath || "Reviews",
+				noteTemplate:
+					item.noteTemplate ||
+					"##### Tasks\n\n{{tasks}}\n##### Notes\n\n",
+				builtIn: item.builtIn ?? false,
+				autoCreate: item.autoCreate ?? false,
+				autoCreateWeekday: item.autoCreateWeekday ?? 5,
+			}));
 		})(),
 	};
 }
@@ -375,11 +376,11 @@ export class TasksNLSettingTab extends PluginSettingTab {
 
 	private renderSyncSection(containerEl: HTMLElement): void {
 		new Setting(containerEl)
-			.setName(this.settingText("Synchronisatie met mobiel", "Mobile settings sync"))
+			.setName(this.settingText("Instellingen synchroniseren", "Sync settings"))
 			.setDesc(
 				this.settingText(
-					"Projecten, personen, herhalingen en overige instellingen worden automatisch gespiegeld naar .tasks-nl/settings.json in de vault. Laat deze map door Obsidian Sync, iCloud of je andere synchronisatiedienst meenemen.",
-					"Projects, people, repeat definitions and other settings are automatically mirrored to .tasks-nl/settings.json in the vault. Make sure Obsidian Sync, iCloud or your other sync service includes this folder."
+					"Tasks NL gebruikt Obsidian’s standaard data.json. Schakel in Obsidian Sync de synchronisatie van instellingen en communityplugins in. Bestaande projecten, personen, herhalingen en templates worden bij updates nooit overschreven.",
+					"Tasks NL uses Obsidian’s standard data.json. In Obsidian Sync, enable syncing for settings and community plugins. Updates never overwrite existing projects, people, repeat definitions or templates."
 				)
 			);
 	}

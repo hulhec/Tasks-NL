@@ -4,10 +4,10 @@ import type { Task } from "./models/Task";
 import { TaskCreationService } from "./services/TaskCreationService";
 import { RecurringTaskService } from "./services/RecurringTaskService";
 import {
-	mergeSettings,
 	TasksNLSettings,
 	TasksNLSettingTab,
 } from "./settings";
+import { SettingsManager } from "./services/SettingsManager";
 import { NewTaskModal } from "./ui/NewTaskModal";
 import { TemplatePickerModal } from "./ui/TemplatePickerModal";
 import type { TaskTemplate } from "./settings";
@@ -26,37 +26,13 @@ export default class TasksNLPlugin extends Plugin {
 	private workspaceRibbonIcon?: HTMLElement;
 	private statusBarItem?: HTMLElement;
 
-	private readonly syncedSettingsPath = "Tasks NL/settings.json";
-	private readonly legacySyncedSettingsPath = ".tasks-nl/settings.json";
-	private writingSyncedSettings = false;
+	private settingsManager!: SettingsManager;
 
 	async onload(): Promise<void> {
-		const localData: unknown = await this.loadData();
-		const syncedData = await this.loadSyncedSettings();
-
-		const data = syncedData ?? localData;
-		const loadedData =
-			typeof data === "object" && data !== null
-				? (data as Partial<TasksNLSettings>)
-				: null;
-
-		this.settings = mergeSettings(loadedData);
+		this.settingsManager = new SettingsManager(this);
+		this.settings = await this.settingsManager.load();
 		this.repository = new TaskRepository(this.app);
 		this.recurringTaskService = new RecurringTaskService(this.app);
-
-		// Mirror settings to a regular vault file so desktop and mobile receive
-		// the same project, person, repeat and interface definitions.
-		await this.writeSyncedSettings();
-		this.registerEvent(this.app.vault.on("modify", (file) => {
-			if (file.path === this.syncedSettingsPath && !this.writingSyncedSettings) {
-				void this.reloadSyncedSettings();
-			}
-		}));
-		this.registerEvent(this.app.vault.on("create", (file) => {
-			if (file.path === this.syncedSettingsPath && !this.writingSyncedSettings) {
-				void this.reloadSyncedSettings();
-			}
-		}));
 
 		this.registerEvent(this.app.vault.on("modify", (file) => {
 			if (file instanceof TFile) void this.recurringTaskService.handleModify(file);
@@ -114,8 +90,8 @@ export default class TasksNLPlugin extends Plugin {
 	}
 
 	async saveSettings(): Promise<void> {
-		await this.saveData(this.settings);
-		await this.writeSyncedSettings();
+		await this.settingsManager.save(this.settings);
+		this.settings = this.settingsManager.current;
 		this.refreshOptionalUi();
 
 		const workspaceViews = this.app.workspace
@@ -124,63 +100,6 @@ export default class TasksNLPlugin extends Plugin {
 			.filter((view): view is TasksNLWorkspaceView => view instanceof TasksNLWorkspaceView);
 		await Promise.all(workspaceViews.map((view) => view.refresh()));
 
-		this.app.workspace.trigger("layout-change");
-	}
-
-	private async loadSyncedSettings(): Promise<Partial<TasksNLSettings> | null> {
-		for (const path of [this.syncedSettingsPath, this.legacySyncedSettingsPath]) {
-			const file = this.app.vault.getAbstractFileByPath(path);
-			if (!(file instanceof TFile)) continue;
-
-			try {
-				const content = await this.app.vault.cachedRead(file);
-				const parsed: unknown = JSON.parse(content);
-				if (typeof parsed === "object" && parsed !== null) {
-					return parsed;
-				}
-			} catch (error) {
-				console.error(`Tasks NL could not read synced settings from ${path}`, error);
-			}
-		}
-		return null;
-	}
-
-	private async writeSyncedSettings(): Promise<void> {
-		this.writingSyncedSettings = true;
-		try {
-			const folder = "Tasks NL";
-			if (!this.app.vault.getAbstractFileByPath(folder)) {
-				await this.app.vault.createFolder(folder);
-			}
-
-			const content = `${JSON.stringify(this.settings, null, 2)}\n`;
-			const file = this.app.vault.getAbstractFileByPath(this.syncedSettingsPath);
-			if (file instanceof TFile) {
-				const current = await this.app.vault.cachedRead(file);
-				if (current !== content) await this.app.vault.modify(file, content);
-			} else {
-				await this.app.vault.create(this.syncedSettingsPath, content);
-			}
-		} catch (error) {
-			console.error("Tasks NL could not write synced settings", error);
-		} finally {
-			this.writingSyncedSettings = false;
-		}
-	}
-
-	private async reloadSyncedSettings(): Promise<void> {
-		const synced = await this.loadSyncedSettings();
-		if (!synced) return;
-
-		this.settings = mergeSettings(synced);
-		await this.saveData(this.settings);
-		this.refreshOptionalUi();
-
-		const workspaceViews = this.app.workspace
-			.getLeavesOfType(TASKS_NL_WORKSPACE_VIEW)
-			.map((leaf) => leaf.view)
-			.filter((view): view is TasksNLWorkspaceView => view instanceof TasksNLWorkspaceView);
-		await Promise.all(workspaceViews.map((view) => view.refresh()));
 		this.app.workspace.trigger("layout-change");
 	}
 
