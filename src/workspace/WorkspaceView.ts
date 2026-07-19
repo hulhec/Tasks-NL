@@ -780,7 +780,7 @@ export class TasksNLWorkspaceView extends ItemView {
 		sectionId: WorkspaceSectionId
 	): void {
 		const row = container.createEl("button", {
-			cls: `tasks-nl-workspace-taskrow${task.parentId ? " is-subtask" : ""}`,
+			cls: `tasks-nl-workspace-taskrow${task.parentId ? " is-subtask" : ""}${task.focusStatus ? " is-focus" : ""}`,
 			attr: {
 				type: "button",
 				"aria-label": `Open ${task.titel || "Task"}`,
@@ -814,6 +814,56 @@ export class TasksNLWorkspaceView extends ItemView {
 
 			void this.completeTask(task);
 		});
+		// Focus status: one task per position (1, 2 or 3), stored as hidden task metadata.
+		const isDutch = this.plugin.settings.settingsLanguage === "nl";
+		const focus = row.createSpan({
+			cls: `tasks-nl-workspace-focus${task.focusStatus ? " is-active" : ""}`,
+			text: task.focusStatus ? String(task.focusStatus) : "",
+			attr: {
+				role: "button",
+				tabindex: "0",
+				"aria-label": task.focusStatus
+					? (isDutch
+						? `Wijzig focuspositie ${task.focusStatus}`
+						: `Change focus position ${task.focusStatus}`)
+					: (isDutch ? "Stel focuspositie in" : "Set focus position"),
+				title: task.focusStatus
+					? `Focus ${task.focusStatus}`
+					: (isDutch ? "Kies focus 1, 2 of 3" : "Set focus 1, 2 or 3"),
+			},
+		});
+
+		const openFocusMenu = (event: MouseEvent | KeyboardEvent): void => {
+			event.preventDefault();
+			event.stopPropagation();
+			const menu = new Menu();
+			menu.addItem((item) =>
+				item
+					.setTitle(isDutch ? "Geen focus" : "No focus")
+					.setChecked(task.focusStatus === undefined)
+					.onClick(() => void this.setTaskFocus(task, undefined))
+			);
+			for (const position of [1, 2, 3] as const) {
+				menu.addItem((item) =>
+					item
+						.setTitle(`Focus ${position}`)
+						.setChecked(task.focusStatus === position)
+						.onClick(() => void this.setTaskFocus(task, position))
+				);
+			}
+			if (event instanceof MouseEvent) {
+				menu.showAtMouseEvent(event);
+			} else {
+				const rect = focus.getBoundingClientRect();
+				menu.showAtPosition({ x: rect.left, y: rect.bottom });
+			}
+		};
+
+		focus.addEventListener("click", openFocusMenu);
+		focus.addEventListener("keydown", (event) => {
+			if (event.key === "Enter" || event.key === " ") openFocusMenu(event);
+		});
+
 		//task title
 		row.createSpan({
 			cls: "tasks-nl-workspace-task-title",
@@ -922,6 +972,57 @@ export class TasksNLWorkspaceView extends ItemView {
 		row.addEventListener("click", () => {
 			void this.openTask(task);
 		});
+	}
+
+	private async setTaskFocus(
+		task: Task,
+		position: 1 | 2 | 3 | undefined
+	): Promise<void> {
+		if (!task.bronBestand || task.regelNummer === undefined) return;
+
+		const focusPattern = /\s*<!--\s*tasks-nl-focus:[123]\s*-->/gu;
+		const targetPath = task.bronBestand;
+		const targetLine = task.regelNummer;
+		let targetUpdated = false;
+		const modifiedFiles: TFile[] = [];
+
+		for (const file of this.plugin.app.vault.getMarkdownFiles()) {
+			const content = await this.plugin.app.vault.cachedRead(file);
+			const lines = content.split("\n");
+			let changed = false;
+
+			for (let index = 0; index < lines.length; index += 1) {
+				const line = lines[index] ?? "";
+				const match = line.match(/<!--\s*tasks-nl-focus:([123])\s*-->/u);
+				const isTarget = file.path === targetPath && index === targetLine;
+
+				if (match && (isTarget || Number(match[1]) === position)) {
+					lines[index] = line.replace(focusPattern, "").replace(/\s+$/u, "");
+					changed = true;
+				}
+
+				if (isTarget && position !== undefined) {
+					const cleanLine = (lines[index] ?? "").replace(focusPattern, "").replace(/\s+$/u, "");
+					lines[index] = `${cleanLine} <!-- tasks-nl-focus:${position} -->`;
+					changed = true;
+					targetUpdated = true;
+				}
+			}
+
+			if (changed) {
+				await this.plugin.app.vault.modify(file, lines.join("\n"));
+				modifiedFiles.push(file);
+			}
+		}
+
+		if (position === undefined || targetUpdated) {
+			await Promise.all(
+				modifiedFiles.map((file) =>
+					refreshOpenMarkdownViews(this.plugin.app, file)
+				)
+			);
+			await this.refresh();
+		}
 	}
 
 	private renderMetadataColumn(

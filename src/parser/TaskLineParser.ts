@@ -7,17 +7,20 @@ export function parseTaskLine(line: string): Task | null {
 	if (!match?.[1] || !match[2]) return null;
 
 	const content = match[2];
-	const dueDate = findDisplayDate(content);
-	const repeat = content.match(
+	const focusMatch = content.match(/<!--\s*tasks-nl-focus:([123])\s*-->/u);
+	const focusStatus = focusMatch ? (Number(focusMatch[1]) as 1 | 2 | 3) : undefined;
+	const cleanContent = content.replace(/<!--\s*tasks-nl-focus:[123]\s*-->/gu, "").trim();
+	const dueDate = findDisplayDate(cleanContent);
+	const repeat = cleanContent.match(
 		/🔁\s+(.+?)(?=\s+🏁|\s+(?:📅|⏳|🛫|🛬|➕|✅)|\s+#[\p{L}\p{N}_/-]+|$)/u
 	)?.[1]?.trim();
-	const priority = parsePriority(content);
-	const hashtags = Array.from(content.matchAll(/#([\p{L}\p{N}_/-]+)/gu))
+	const priority = parsePriority(cleanContent);
+	const hashtags = Array.from(cleanContent.matchAll(/#([\p{L}\p{N}_/-]+)/gu))
 		.map((item) => item[1])
 		.filter((tag): tag is string => Boolean(tag))
 		.map((tag) => `#${tag}`);
 
-	const title = content
+	const title = cleanContent
 		.replace(
 			/🔁\s+(.+?)(?=\s+🏁|\s+(?:📅|⏳|🛫|🛬|➕|✅)|\s+#[\p{L}\p{N}_/-]+|$)/gu,
 			""
@@ -36,6 +39,7 @@ export function parseTaskLine(line: string): Task | null {
 		prioriteit: priority,
 		vervalDatum: dueDate,
 		herhaling: repeat,
+		focusStatus,
 		hashtags,
 	};
 }

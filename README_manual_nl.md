@@ -29,11 +29,15 @@ Tasks NL herkent onder meer datums, prioriteiten, herhaling, projecten, personen
 
 ## 2. Instellingen
 
-<img src="image/i-general.png" width= 600>
-
   Open **Settings → Community plugins → Tasks NL**. Het instellingenscherm is verdeeld in secties.
 
+### Taalkeuze
+
+Bovenaan de instellingen kiest u **NL — Nederlands** of **ENG — English**. Deze keuze vertaalt de uitleg en labels in het instellingenscherm. De gekozen taal verandert bestaande taken niet en staat los van de herkenningswoorden die u zelf configureert.
+
 ### General
+
+<img src="image/i-general.png" width= 600>
 
 **Default task title**
 
@@ -64,6 +68,11 @@ Toont Tasks NL in de statusbalk.
 <img src="image/i-capture.png" width= 600>
 
 In deze sectie beheer je de woordenlijsten waarmee natuurlijke invoer wordt geïnterpreteerd.
+
+**Herhalingsvelden**
+
+Een herhalingsopdracht bestaat uit een herkenbare invoertekst en de bijbehorende Engelse Tasks-instructie. Daardoor kunt u zelf Nederlandse, Engelse of andere formuleringen toevoegen. Enkelvoud en meervoud worden ondersteund, bijvoorbeeld `elke week`, `elke twee weken`, `elke maand` en `elke drie maanden`. De uitvoer gebruikt Engelse Tasks-syntaxis, zoals `every 2 weeks`.
+
 
 **GTD definitions**
 
@@ -203,7 +212,7 @@ De bovenbalk bevat:
 Open reviewtaken met de hashtag `#tasks-nl-review`.
   
 **Inbox**
-Open taken zonder vervaldatum en zonder hashtags. Dit zijn taken die nog verwerkt of geclassificeerd moeten worden.
+Open taken zonder vervaldatum en zonder Waiting For- of Someday-status. Project- en persoonstags sluiten een taak niet uit van Inbox.
 
 **Actual**
 Open taken met een vervaldatum tot en met morgen.
@@ -221,6 +230,12 @@ Taken met de ingestelde GTD-hashtag of een daarvan afgeleide classificatie.
 Taken die via de ingestelde GTD-definitie als Someday zijn gemarkeerd.
 
 Een taak kan in meer dan één relevante sectie voorkomen. Een taak met een datum en Waiting For-status kan bijvoorbeeld zowel in een datumsectie als in Waiting For staan.
+
+### Focus 1, 2 en 3
+
+In iedere taakregel staat een kleine focusknop. Hiermee geeft u maximaal drie lopende taken de positie **1**, **2** of **3**. Iedere positie kan maar door één taak worden gebruikt. Als u een positie aan een andere taak geeft, wordt die positie automatisch bij de vorige taak verwijderd.
+
+De taak blijft in dezelfde Workspace-sectie en op dezelfde plaats staan. Alle drie focustaken krijgen dezelfde subtiele lichte accentkleur. De focusstatus is geen hashtag; Tasks NL bewaart deze als verborgen metadata in de Markdown-taakregel. Kies **Geen focus** om de status te verwijderen.
 
 ### Zoeken en filteren
 

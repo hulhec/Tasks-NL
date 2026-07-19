@@ -13,6 +13,7 @@ export interface Task {
 	prioriteit: TaskPriority;
 	vervalDatum?: string;
 	herhaling?: string;
+	focusStatus?: 1 | 2 | 3;
 	hashtags: string[];
 	bronBestand?: string;
 	regelNummer?: number;

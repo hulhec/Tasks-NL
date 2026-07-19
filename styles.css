@@ -572,13 +572,14 @@
 /* ==========================================================================
    8D. WORKSPACE - TAAKREGEL
    Kolomvolgorde uit WorkspaceView.ts:
-   checkbox|titel|prioriteit|herhaling|bron|project| persoon|GTD 40px | datum
+   checkbox|focus|titel|prioriteit|herhaling|bron|project|persoon|GTD|datum
    ========================================================================== */
 
 .tasks-nl-workspace-taskrow {
 	display: grid;
 	grid-template-columns:
 		22px
+		28px
 		minmax(220px, 1fr)
 		26px
 		26px
@@ -621,6 +622,43 @@
 .tasks-nl-workspace-checkbox:hover {
 	background: var(--background-modifier-hover);
 	box-shadow: 0 0 0 3px var(--background-modifier-hover);
+}
+
+/* Focuspositie 1, 2 of 3. Alle focustaken gebruiken dezelfde subtiele accentkleur. */
+.tasks-nl-workspace-taskrow.is-focus {
+	background: color-mix(in srgb, var(--interactive-accent) 10%, var(--background-primary));
+}
+
+.tasks-nl-workspace-taskrow.is-focus:hover {
+	background: color-mix(in srgb, var(--interactive-accent) 15%, var(--background-primary));
+}
+
+.tasks-nl-workspace-focus {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 5px;
+	color: var(--text-faint);
+	font-size: var(--font-ui-smaller);
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.tasks-nl-workspace-focus::after {
+	content: "·";
+}
+
+.tasks-nl-workspace-focus.is-active {
+	border-color: var(--interactive-accent);
+	background: var(--background-primary);
+	color: var(--text-accent);
+}
+
+.tasks-nl-workspace-focus.is-active::after {
+	content: none;
 }
 
 /* Titel: gebruikt alle resterende ruimte en blijft op één regel. */

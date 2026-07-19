@@ -32,6 +32,11 @@ Tasks NL recognises dates, priorities, recurrence, projects, people, and GTD ter
 
 Open **Settings → Community plugins → Tasks NL**. The settings screen is divided into several sections.
 
+### Language
+
+At the top of the settings, choose **NL — Nederlands** or **ENG — English**. This translates the explanations and labels in the settings screen. The selected language does not alter existing tasks and is independent of the recognition phrases you configure.
+
+
 ### General
 
 **Default task title**
@@ -63,6 +68,11 @@ Displays Tasks NL in Obsidian’s status bar.
 <img src="image/i-capture.png" width="600">
 
 This section manages the dictionaries used to interpret natural-language input.
+
+**Recurrence fields**
+
+A recurrence command consists of a recognised input phrase and its corresponding English Tasks instruction. You can therefore add Dutch, English, or other wording yourself. Singular and plural periods are supported, including `elke week`, `elke twee weken`, `elke maand`, and `elke drie maanden`. The generated output uses English Tasks syntax, such as `every 2 weeks`.
+
 
 **GTD definitions**
 
@@ -204,7 +214,7 @@ Open review tasks containing the `#tasks-nl-review` hashtag.
 
 **Inbox**
 
-Open tasks without a due date and without hashtags. These are tasks that still need to be processed or classified.
+Open tasks without a due date and without a Waiting For or Someday status. Project and person tags do not exclude a task from Inbox.
 
 **Actual**
 
@@ -227,6 +237,12 @@ Tasks containing the configured GTD hashtag or a classification derived from it.
 Tasks marked as Someday through the configured GTD definition.
 
 A task may appear in more than one relevant section. For example, a dated task with Waiting For status may appear both in a date section and under Waiting For.
+
+### Focus 1, 2, and 3
+
+Each task row contains a small focus button. Use it to assign positions **1**, **2**, or **3** to up to three active tasks. Each position can belong to only one task. Assigning an occupied position to another task automatically removes it from the previous task.
+
+The task remains in its current Workspace section and position. All three focus tasks use the same subtle light accent colour. Focus is not a hashtag; Tasks NL stores it as hidden metadata in the Markdown task line. Select **No focus** to remove it.
 
 ### Searching and filtering
 
