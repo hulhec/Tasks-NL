@@ -1,173 +1,112 @@
+**Language:** [English](README_manual_ENG.md) · [Nederlands](README_manual_nl.md)
+
 <div align="center">
-  <img src="image/logo_task_nl.png" width="150" alt="Task-NL logo">
+  <img src="image/tasks-nl-v1-banner.png" width="900" alt="Tasks NL: natural task capture and GTD Workspace for Obsidian">
 </div>
 
-Tasks NL lets you write tasks naturally in Dutch while producing clean, standardized Markdown compatible with the Obsidian Tasks ecosystem.
+# Tasks NL
 
----
+Tasks NL lets you capture tasks in natural Dutch, stores them as standard Markdown tasks, and presents them in a GTD-oriented Workspace. The settings interface is available in **NL — Nederlands** and **ENG — English**.
 
-## Features
+## Highlights
 
-- 🇳🇱 Natural Dutch task entry
-- 📅 Automatic date recognition
-- 🔁 Recurring tasks
-- 👥 Projects and people
-- 📋 Sequential subtasks
-- 🖥 GTD Workspace
-- 📖 Weekly and monthly reviews
-- ✏️ Visual task editor
-- ⚡ Works with standard Markdown
-
----
+- Natural-language capture for dates, priorities, recurrence, projects, people, and GTD terms.
+- Standard Markdown task lines; your vault remains the source of truth.
+- GTD Workspace with Inbox, current tasks, this week, later, Waiting For, Someday, and Review.
+- Focus positions **1, 2, and 3** without adding tags; focused tasks stay in place and share one subtle highlight colour.
+- Up to two people per task, both visible in the Workspace.
+- Configurable recurrence phrases mapped to English Tasks syntax, including singular and plural intervals such as `elke week`, `elke twee weken`, `elke maand`, and `elke drie maanden`.
+- Desktop, iPad, and phone layouts.
 
 ## Workspace
 
-Tasks NL provides a GTD-inspired Workspace with:
+<img src="image/Workspace header.png" width="900" alt="Tasks NL Workspace header">
 
-- Inbox
-- Actual
-- This week
-- 7+ days
-- Waiting
-- Someday
-- Review
+Tasks remain in their normal Workspace section. A focus value of 1, 2, or 3 can be assigned directly from the task row. Each number can be used by one task at a time, and no focus hashtag is added.
 
-All tasks remain normal Markdown tasks.
+## Settings language
 
----
+Choose **NL — Nederlands** or **ENG — English** at the top of **Settings → Community plugins → Tasks NL**. This translates the settings labels and explanations. Recognition phrases remain independently configurable.
 
-## Reviews
+<img src="image/i-general.png" width="900" alt="Tasks NL general settings">
 
-Tasks NL can create:
+## Configurable recurrence
 
-- Weekly Review
-- Monthly Review
+Each recurrence definition contains:
 
-Review notes are generated as Markdown files inside your vault.
+1. the phrase you type, for example `elke twee weken`;
+2. the English Tasks instruction, for example `every 2 weeks`.
 
-The layout, filename and location are configurable.
+Both singular and plural week/month expressions are recognised. You can also add English or other custom phrases.
 
----
+<img src="image/i-capture.png" width="900" alt="Tasks NL capture and recurrence settings">
 
-## Natural Dutch
+## Projects and people
 
-Examples
+Project and person definitions map natural wording to hashtags. A task may contain at most two configured people; both are displayed in the Workspace.
 
-```
-morgen Peter bellen hoog CRM
-```
+<img src="image/i-projects.png" width="900" alt="Tasks NL project settings">
 
-becomes
+<img src="image/i-people.png" width="900" alt="Tasks NL people settings">
 
-```
-- [ ] Peter bellen 📅 2026-07-13 🔥 high +CRM
-```
+## Task capture and editing
 
----
+<img src="image/new task.png" width="900" alt="Create a task with Tasks NL">
 
-## Philosophy
-
-Write naturally.
-
-Store consistently.
-
-Markdown is the source of truth.
-
----
+<img src="image/edit task.png" width="900" alt="Edit a task with Tasks NL">
 
 ## Installation
 
-### BRAT (recommended)
+### Community Plugins
 
-Instructions will follow after the first public release.
+After publication, install Tasks NL from **Settings → Community plugins → Browse**.
 
-### Manual
+### BRAT
 
-Copy
+Before publication, add the GitHub repository through BRAT and select the latest release.
 
-- manifest.json
-- main.js
-- styles.css
+### Manual installation
 
-to
+Copy `main.js`, `manifest.json`, and `styles.css` into:
 
-```
-Vault/.obsidian/plugins/tasks-nl/
+```text
+<Vault>/.obsidian/plugins/tasks-nl/
 ```
 
-Restart Obsidian.
+Restart Obsidian, then enable **Tasks NL** under Community plugins.
 
----
+## Documentation
 
-## Roadmap
+- [English manual](README_manual_ENG.md)
+- [Nederlandse handleiding](README_manual_nl.md)
+- [Architecture](doc/Architecture.md)
+- [Roadmap](doc/ROADMAP.md)
+- [Contributing](assets/Contributing.md)
 
-See
+## Release files
 
-ROADMAP.md
+A GitHub release for version `1.0.0` must contain these files as individual assets:
 
----
+- `main.js`
+- `manifest.json`
+- `styles.css`
 
-## Contributing
+The GitHub tag must exactly match the version in `manifest.json`: `1.0.0`.
 
-Bug reports and ideas are always welcome.
+## Privacy and network use
 
-Please create an Issue before submitting larger Pull Requests.
+Tasks NL reads and updates Markdown files in the active vault to provide its task features. The plugin does not require an external service and does not send vault content over the network.
 
----
+## Compatibility
+
+- Minimum Obsidian version: **1.8.7**
+- Desktop and mobile: supported
+- Tasks NL can operate independently and uses familiar task metadata syntax for compatibility with the Obsidian Tasks ecosystem.
 
 ## Support
 
-If Tasks NL saves you time and helps you stay organized, you can support future development.
-
-❤️ Buy me a coffee
-
-[Link](https://buymeacoffee.com/joostvanderhulst)
-
----
+Bug reports and feature requests are welcome through GitHub Issues.
 
 ## License
 
-Tasks NL is released under the MIT License.
-
-See the LICENSE file for details.
-
-
----
-
-## Inspiration
-
-This plugin is inspired by the Obsidian Community Plugin **Tasks**.
-
-Tasks NL can operate completely independently, but it can also be used alongside the Community Tasks plugin. It uses the same task syntax and icons to maximize compatibility.
-
-Icons used (Tasks syntax):
-
-- 📅 Due date
-- ✅ Completion date
-- 🔁 Recurrence
-- 🏁 On completion (`delete` / `keep`)
-- ⏫ ⏬ 🔼 Priority (when used)
-
-This keeps Markdown files readable and compatible with both plugins.
-
-
-## Acknowledgements
-
-Tasks NL is inspired by the excellent **Tasks Community Plugin** for Obsidian.
-
-Tasks NL is an independent project that can operate completely on its own and does not require the Tasks Community Plugin. At the same time, it is fully compatible with the Tasks task format and can also be used alongside the Tasks plugin without conflicts.
-
-To maximize compatibility, Tasks NL uses the same task syntax and icons where applicable, including:
-
-- 📅 Due Date
-- ✅ Completion Date
-- 🔁 Recurrence
-- 🏁 On Completion (`delete` / `keep`)
-- ⏫ High Priority
-- 🔼 Medium Priority
-- 🔽 Low Priority
-
-This compatibility allows users to migrate between both plugins or use them together while keeping their Markdown task files fully compatible.
-
-**Tasks** is an official Obsidian Community Plugin. All credit for the original task format, syntax and concepts belongs to the Tasks project and its contributors. Tasks NL is an independent project inspired by the Tasks plugin and designed to be compatible with its task format.
-
+Tasks NL is released under the [MIT License](LICENSE).

@@ -1,11 +1,13 @@
 
+**Taal:** [Nederlands](README_manual_nl.md) · [English](README_manual_ENG.md)
+
 <div align="center">
-  <img src="image/logo_task_nl.png" width="150" alt="Task-NL logo">
+  <img src="image/tasks-nl-v1-banner.png" width="900" alt="Tasks NL Workspace and language support">
 </div>
 
 # Tasks NL – Nederlandstalige handleiding
 
-Deze handleiding beschrijft Tasks NL versie 0.9.0 voor Obsidian. De plugin laat je taken in natuurlijke Nederlandse tekst invoeren, bewaart ze als gewone Markdown-taken en toont ze in een GTD-georiënteerde Workspace.
+Deze handleiding beschrijft Tasks NL versie 1.0.0 voor Obsidian. De plugin laat je taken in natuurlijke Nederlandse tekst invoeren, bewaart ze als gewone Markdown-taken en toont ze in een GTD-georiënteerde Workspace.
 ## 1. Algemene werkwijze
 
 Tasks NL gebruikt je Markdown-bestanden als bron. Een taak blijft dus een normale regel zoals:

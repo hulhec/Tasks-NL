@@ -1,9 +1,9 @@
 {
 	"id": "tasks-nl",
 	"name": "Tasks NL",
-	"version": "0.9.1",
+	"version": "1.0.0",
 	"minAppVersion": "1.8.7",
-	"description": "Next Level Productivity for Obsidian.",
+	"description": "Next levvel task management and a GTD workspace for Obsidian.",
 	"author": "Joost van der Hulst",
 	"authorUrl": "https://www.ikstaevenstilbij.nl",
 	"isDesktopOnly": false

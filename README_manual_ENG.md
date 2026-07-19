@@ -1,11 +1,13 @@
 
+**Taal:** [Nederlands](README_manual_nl.md) · [English](README_manual_ENG.md)
+
 <div align="center">
-  <img src="image/logo_task_nl.png" width="150" alt="Task-NL logo">
+  <img src="image/tasks-nl-v1-banner.png" width="900" alt="Tasks NL Workspace and language support">
 </div>
 
 # Tasks NL – English Manual
 
-This manual describes Tasks NL version 0.9.0 for Obsidian. The plugin lets you enter tasks using natural Dutch language, stores them as regular Markdown tasks, and displays them in a GTD-oriented Workspace.
+This manual describes Tasks NL version 1.0.0 for Obsidian. The plugin lets you enter tasks using natural Dutch language, stores them as regular Markdown tasks, and displays them in a GTD-oriented Workspace.
 
 ## 1. General workflow
 
