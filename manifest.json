@@ -1,7 +1,7 @@
 {
   "id": "tasks-nl",
   "name": "Tasks NL",
-  "version": "1.1.1-beta.2",
+  "version": "1.2.0",
   "minAppVersion": "1.8.7",
   "description": "Natural-language task capture and a GTD workspace for Obsidian.",
   "author": "Joost van der Hulst",

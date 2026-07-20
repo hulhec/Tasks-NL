@@ -27,6 +27,7 @@ export class NewTaskModal extends Modal {
 	private taskText: string;
 	private previewEl!: HTMLElement;
 	private subtasksText = "";
+	private taskInputEl?: HTMLTextAreaElement;
 
 	constructor(
 		app: App,
@@ -65,6 +66,24 @@ export class NewTaskModal extends Modal {
 			text: this.editMode ? "Edit task" : "New task",
 		});
 
+		const topActions = contentEl.createDiv({ cls: "tasks-nl-task-top-actions" });
+		const dismissKeyboard = topActions.createEl("button", {
+			text: "Keyboard sluiten",
+			attr: { type: "button", "aria-label": "Sluit het toetsenbord" },
+		});
+		dismissKeyboard.addEventListener("click", () => {
+			this.taskInputEl?.blur();
+			const active = document.activeElement;
+			if (active instanceof HTMLElement) active.blur();
+		});
+
+		const saveButton = topActions.createEl("button", {
+			text: this.editMode ? "Save task" : "Add task",
+			cls: "mod-cta",
+			attr: { type: "button" },
+		});
+		saveButton.addEventListener("click", () => this.submit());
+
 		const taskSetting = new Setting(contentEl)
 			.setName(
 				this.editMode
@@ -92,8 +111,14 @@ export class NewTaskModal extends Modal {
 
 			text.inputEl.rows = 2;
 			text.inputEl.addClass("tasks-nl-task-textarea");
+			this.taskInputEl = text.inputEl;
 			window.setTimeout(() => text.inputEl.focus(), 0);
 		});
+
+		this.previewEl = contentEl.createDiv({
+			cls: "tasks-nl-preview tasks-nl-preview-top",
+		});
+		this.updatePreview();
 
 		const dateSetting = new Setting(contentEl)
 			.setName("Due date")
@@ -152,28 +177,12 @@ export class NewTaskModal extends Modal {
 				text.onChange((value) => { this.subtasksText = value; });
 			});
 
-		this.previewEl = contentEl.createDiv({
-			cls: "tasks-nl-preview",
+		const bottomActions = contentEl.createDiv({ cls: "tasks-nl-task-bottom-actions" });
+		const cancelButton = bottomActions.createEl("button", {
+			text: "Cancel",
+			attr: { type: "button" },
 		});
-
-		this.updatePreview();
-
-		new Setting(contentEl)
-			.addButton((button) =>
-				button
-					.setButtonText("Cancel")
-					.onClick(() => this.close())
-			)
-			.addButton((button) =>
-				button
-					.setButtonText(
-						this.editMode
-							? "Save task"
-							: "Add task"
-					)
-					.setCta()
-					.onClick(() => this.submit())
-			);
+		cancelButton.addEventListener("click", () => this.close());
 	}
 
 	onClose(): void {

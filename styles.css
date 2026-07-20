@@ -1502,3 +1502,64 @@
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 }
+
+/* Tasks NL 1.2.0 — mobile task editor */
+.tasks-nl-task-top-actions {
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	margin: 0 0 10px;
+	padding: 8px 0;
+	background: var(--background-primary);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+.tasks-nl-task-bottom-actions {
+	display: flex;
+	justify-content: flex-start;
+	margin-top: 12px;
+}
+.tasks-nl-preview-top {
+	margin: 6px 0 12px;
+}
+@media (max-width: 768px) {
+	.tasks-nl-task-modal .modal-content {
+		display: block;
+		padding-bottom: max(16px, env(safe-area-inset-bottom));
+	}
+	.tasks-nl-task-top-actions {
+		top: 0;
+		padding-top: max(8px, env(safe-area-inset-top));
+	}
+	.tasks-nl-task-top-actions button {
+		min-height: 40px;
+	}
+	.tasks-nl-preview-top {
+		margin-top: 8px;
+	}
+	.tasks-nl-task-modal textarea,
+	.tasks-nl-task-modal input {
+		font-size: 16px;
+	}
+}
+/* Mobile landscape: move date to a second row so it cannot run off-screen. */
+@media (orientation: landscape) and (max-width: 1024px) {
+	.is-mobile .tasks-nl-workspace-taskrow {
+		grid-template-columns: 22px 28px minmax(180px, 1fr) 26px 26px 26px minmax(72px, .55fr) minmax(92px, .75fr) minmax(64px, .5fr);
+		grid-template-areas:
+			"check focus title priority recurring source project person gtd"
+			". . date date date date date date date";
+		min-height: 58px;
+		row-gap: 3px;
+	}
+	.is-mobile .tasks-nl-workspace-date {
+		justify-self: start;
+		min-width: 0;
+		text-align: left !important;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+}
