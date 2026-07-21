@@ -1709,3 +1709,31 @@
 		text-align: right !important;
 	}
 }
+
+/* Tasks NL 1.2.4 — preserve full desktop weekday and date */
+@media (min-width: 769px) {
+	.tasks-nl-workspace-taskrow {
+		grid-template-columns:
+			22px
+			28px
+			minmax(220px, 1fr)
+			26px
+			26px
+			26px
+			60px
+			60px
+			60px
+			96px;
+	}
+
+	.tasks-nl-workspace-date {
+		width: 96px;
+		min-width: 96px;
+		max-width: 96px;
+		padding-right: 10px;
+		overflow: visible;
+		text-overflow: clip;
+		white-space: nowrap;
+	}
+}
+
