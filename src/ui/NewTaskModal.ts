@@ -72,6 +72,7 @@ export class NewTaskModal extends Modal {
 			attr: { type: "button", "aria-label": "Sluit het toetsenbord", title: "Toetsenbord sluiten" },
 		});
 		setIcon(dismissKeyboard, "keyboard-off");
+		dismissKeyboard.createSpan({ text: "Sluit" });
 		dismissKeyboard.addEventListener("click", () => {
 			this.taskInputEl?.blur();
 			const active = document.activeElement;
@@ -87,6 +88,7 @@ export class NewTaskModal extends Modal {
 			},
 		});
 		setIcon(saveButton, "save");
+		saveButton.createSpan({ text: this.editMode ? "Opslaan" : "Toevoegen" });
 		saveButton.addEventListener("click", () => this.submit());
 
 		const taskSetting = new Setting(contentEl)
