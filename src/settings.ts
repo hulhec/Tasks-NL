@@ -1,4 +1,4 @@
-import { App, moment, PluginSettingTab, Setting } from "obsidian";
+import { App, moment, PluginSettingTab, Setting, setIcon } from "obsidian";
 import TasksNLPlugin from "./main";
 
 export interface GTDDefinition {
@@ -726,17 +726,11 @@ export class TasksNLSettingTab extends PluginSettingTab {
 	private renderAboutSection(containerEl: HTMLElement): void {
 		const about = containerEl.createDiv({ cls: "tasks-nl-about" });
 
-		if (this.plugin.manifest.dir) {
-			about.createEl("img", {
-				cls: "tasks-nl-about-logo",
-				attr: {
-					src: this.app.vault.adapter.getResourcePath(
-						`${this.plugin.manifest.dir}/assets/bib-logo.png`
-					),
-					alt: "Bedrijfsvoering in balans",
-				},
-			});
-		}
+		const logo = about.createDiv({
+			cls: "tasks-nl-about-logo tasks-nl-about-logo-icon",
+			attr: { "aria-label": "Tasks NL" },
+		});
+		setIcon(logo, "list-checks");
 		about.createEl("strong", { text: "Tasks NL" });
 		about.createEl("small", {
 			text: "Next level productivity for Obsidian",

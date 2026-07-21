@@ -69,18 +69,21 @@ export default class TasksNLPlugin extends Plugin {
 		this.addCommand({
 			id: "open-workspace",
 			name: "Open workspace",
+			icon: "layout-dashboard",
 			callback: () => void this.activateWorkspace(),
 		});
 
 		this.addCommand({
 			id: "create-from-template",
 			name: "Create task from template",
+			icon: "copy-plus",
 			callback: () => this.openTemplatePicker(),
 		});
 
 		this.addCommand({
 			id: "new-task",
 			name: "Create or edit task",
+			icon: "square-pen",
 			callback: () => this.openTaskModal(),
 		});
 

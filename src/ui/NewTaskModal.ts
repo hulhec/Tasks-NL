@@ -68,9 +68,10 @@ export class NewTaskModal extends Modal {
 
 		const topActions = contentEl.createDiv({ cls: "tasks-nl-task-top-actions" });
 		const dismissKeyboard = topActions.createEl("button", {
-			text: "Keyboard sluiten",
-			attr: { type: "button", "aria-label": "Sluit het toetsenbord" },
+			cls: "tasks-nl-task-action-button tasks-nl-task-action-keyboard",
+			attr: { type: "button", "aria-label": "Sluit het toetsenbord", title: "Toetsenbord sluiten" },
 		});
+		setIcon(dismissKeyboard, "keyboard-off");
 		dismissKeyboard.addEventListener("click", () => {
 			this.taskInputEl?.blur();
 			const active = document.activeElement;
@@ -78,10 +79,14 @@ export class NewTaskModal extends Modal {
 		});
 
 		const saveButton = topActions.createEl("button", {
-			text: this.editMode ? "Save task" : "Add task",
-			cls: "mod-cta",
-			attr: { type: "button" },
+			cls: "mod-cta tasks-nl-task-action-button tasks-nl-task-action-save",
+			attr: {
+				type: "button",
+				"aria-label": this.editMode ? "Taak opslaan" : "Taak toevoegen",
+				title: this.editMode ? "Taak opslaan" : "Taak toevoegen",
+			},
 		});
+		setIcon(saveButton, "save");
 		saveButton.addEventListener("click", () => this.submit());
 
 		const taskSetting = new Setting(contentEl)

@@ -1563,3 +1563,60 @@
 		text-overflow: ellipsis;
 	}
 }
+
+/* Tasks NL 1.2.1 — layout refinements */
+.tasks-nl-workspace-taskrow {
+	box-sizing: border-box;
+	overflow: hidden;
+}
+.tasks-nl-workspace-date {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+@media (max-width: 768px) {
+	.tasks-nl-task-top-actions {
+		gap: 6px;
+		padding-block: 5px;
+	}
+	.tasks-nl-task-top-actions .tasks-nl-task-action-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		min-height: 32px;
+		padding: 0;
+		border-color: var(--interactive-accent);
+		background: var(--interactive-accent);
+		color: var(--text-on-accent);
+	}
+	.tasks-nl-task-top-actions .tasks-nl-task-action-button svg {
+		width: 16px;
+		height: 16px;
+	}
+}
+@media (orientation: landscape) and (max-width: 1024px) {
+	.is-mobile .tasks-nl-workspace-taskrow {
+		grid-template-columns: 22px 28px minmax(140px, 1fr) 24px 24px 24px minmax(60px, .45fr) minmax(76px, .55fr) minmax(56px, .4fr);
+	}
+	.is-mobile .tasks-nl-workspace-date {
+		width: auto;
+		max-width: 96px;
+		font-size: var(--font-ui-smaller);
+	}
+}
+.tasks-nl-about-logo-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 48px;
+	height: 48px;
+	margin: 0 auto 8px;
+	color: var(--text-accent);
+}
+.tasks-nl-about-logo-icon svg {
+	width: 40px;
+	height: 40px;
+}
