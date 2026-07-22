@@ -1,0 +1,127 @@
+name: Build and release Tasks NL
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+-*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository ophalen
+        uses: actions/checkout@v4
+
+      - name: Node.js instellen
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Dependencies installeren
+        run: npm ci
+
+      - name: Versies controleren
+        shell: bash
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME}"
+          MANIFEST_VERSION=$(node -p "require('./manifest.json').version")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+
+          echo "Tag:      $TAG_VERSION"
+          echo "Manifest: $MANIFEST_VERSION"
+          echo "Package:  $PACKAGE_VERSION"
+
+          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "::error::Tag en manifest.json komen niet overeen."
+            exit 1
+          fi
+
+          if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Tag en package.json komen niet overeen."
+            exit 1
+          fi
+
+          node <<'NODE'
+          const fs = require("fs");
+
+          const manifest = JSON.parse(
+            fs.readFileSync("manifest.json", "utf8")
+          );
+
+          const versions = JSON.parse(
+            fs.readFileSync("versions.json", "utf8")
+          );
+
+          const expected = manifest.minAppVersion;
+          const actual = versions[manifest.version];
+
+          if (!actual) {
+            console.error(
+              `versions.json bevat geen entry voor ${manifest.version}`
+            );
+            process.exit(1);
+          }
+
+          if (actual !== expected) {
+            console.error(
+              `versions.json bevat "${actual}", maar manifest.json gebruikt "${expected}"`
+            );
+            process.exit(1);
+          }
+
+          console.log("Versiecontrole geslaagd.");
+          NODE
+
+      - name: Plugin bouwen
+        run: npm run build
+
+      - name: Releasebestanden controleren
+        shell: bash
+        run: |
+          test -f main.js || {
+            echo "::error::main.js ontbreekt"
+            exit 1
+          }
+
+          test -f manifest.json || {
+            echo "::error::manifest.json ontbreekt"
+            exit 1
+          }
+
+          test -f styles.css || {
+            echo "::error::styles.css ontbreekt"
+            exit 1
+          }
+
+      - name: Plugin-zip maken
+        run: |
+          zip "Tasks-NL-${GITHUB_REF_NAME}.zip" \
+            main.js \
+            manifest.json \
+            styles.css
+
+      - name: GitHub Release maken
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          PRERELEASE_FLAG=""
+
+          if [[ "${GITHUB_REF_NAME}" == *-* ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release create "${GITHUB_REF_NAME}" \
+            main.js \
+            manifest.json \
+            styles.css \
+            "Tasks-NL-${GITHUB_REF_NAME}.zip" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes \
+            $PRERELEASE_FLAG
