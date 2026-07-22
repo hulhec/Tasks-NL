@@ -1737,3 +1737,44 @@
 	}
 }
 
+
+
+/* Tasks NL 1.3.1 — readable mobile dates and language-aware labels */
+@media (max-width: 768px) {
+	.is-mobile .tasks-nl-workspace-taskrow {
+		grid-template-columns: 22px 28px minmax(0, 1fr) 24px 24px 24px 82px;
+		width: calc(100% - 8px);
+		margin-right: 8px;
+	}
+
+	.is-mobile .tasks-nl-workspace-date {
+		width: 82px;
+		min-width: 82px;
+		max-width: 82px;
+		padding-right: 8px;
+		justify-content: flex-end;
+		justify-self: end;
+		overflow: visible;
+		text-overflow: clip;
+		white-space: nowrap;
+	}
+}
+
+@media (orientation: landscape) and (max-width: 1024px) {
+	.is-mobile .tasks-nl-workspace-taskrow {
+		width: calc(100% - 10px);
+		margin-right: 10px;
+	}
+
+	.is-mobile .tasks-nl-workspace-date {
+		width: 86px;
+		min-width: 86px;
+		max-width: 86px;
+		padding-right: 8px;
+		justify-self: end;
+		text-align: right !important;
+		overflow: visible;
+		text-overflow: clip;
+		white-space: nowrap;
+	}
+}

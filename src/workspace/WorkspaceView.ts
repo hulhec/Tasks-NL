@@ -1355,6 +1355,7 @@ export class TasksNLWorkspaceView extends ItemView {
 
 	private formatCompactDate(value: string): string {
 		const date = this.fromIsoDate(value);
+		const isDutch = this.plugin.settings.settingsLanguage === "nl";
 
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
@@ -1363,18 +1364,20 @@ export class TasksNLWorkspaceView extends ItemView {
 		tomorrow.setDate(tomorrow.getDate() + 1);
 
 		if (date.getTime() === today.getTime()) {
-			return "Today";
+			return isDutch ? "Vandaag" : "Today";
 		}
 
 		if (date.getTime() === tomorrow.getTime()) {
-			return "Tomorrow";
+			return isDutch ? "Morgen" : "Tomorrow";
 		}
 
-		return new Intl.DateTimeFormat("en-GB", {
-			weekday: "short",
-			day: "2-digit",
-			month: "2-digit",
-		}).format(date);
+		const weekdays = isDutch
+			? ["zo", "ma", "di", "wo", "do", "vr", "za"]
+			: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+		const day = String(date.getDate()).padStart(2, "0");
+		const month = String(date.getMonth() + 1).padStart(2, "0");
+
+		return `${weekdays[date.getDay()]}, ${day}/${month}`;
 	}
 
 	private fromIsoDate(value: string): Date {
