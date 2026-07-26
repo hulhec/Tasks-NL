@@ -244,8 +244,10 @@ export class TaskCreationService {
 				""
 			);
 
+		const technicalMetadata = this.extractTechnicalMetadata(currentLine);
+
 		editor.replaceRange(
-			`${prefix}${markdown}`,
+			this.appendTechnicalMetadata(`${prefix}${markdown}`, technicalMetadata),
 			{
 				line: lineNumber,
 				ch: 0,
@@ -272,13 +274,15 @@ export class TaskCreationService {
 			if (currentLine === undefined) return content;
 			const prefix = currentLine.match(/^(\s*[-*+]\s+\[[ xX]\]\s*)/u)?.[1] ?? "- [ ] ";
 			const markdown = this.formatEditedTask(text).replace(/^\s*[-*+]\s+\[[ xX]\]\s*/u, "");
-			lines[lineNumber] = `${prefix}${markdown}`;
+			const technicalMetadata = this.extractTechnicalMetadata(currentLine);
+			lines[lineNumber] = this.appendTechnicalMetadata(`${prefix}${markdown}`, technicalMetadata);
 			for (const subtask of editedSubtasks) {
 				const line = lines[subtask.lineNumber];
 				const subPrefix = line?.match(/^(\s*[-*+]\s+\[[ xX]\]\s*)/u)?.[1];
 				if (!line || !subPrefix) continue;
 				const subMarkdown = this.formatEditedTask(subtask.text).replace(/^\s*[-*+]\s+\[[ xX]\]\s*/u, "");
-				lines[subtask.lineNumber] = `${subPrefix}${subMarkdown}`;
+				const technicalMetadata = this.extractTechnicalMetadata(line);
+				lines[subtask.lineNumber] = this.appendTechnicalMetadata(`${subPrefix}${subMarkdown}`, technicalMetadata);
 			}
 			if (subtasks.length > 0) this.appendSubtasksToLines(lines, lineNumber, subtasks);
 			return lines.join("\n");
@@ -317,8 +321,9 @@ export class TaskCreationService {
 			if (!prefix) continue;
 			const markdown = this.formatEditedTask(subtask.text)
 				.replace(/^\s*[-*+]\s+\[[ xX]\]\s*/u, "");
+			const technicalMetadata = this.extractTechnicalMetadata(currentLine);
 			editor.replaceRange(
-				`${prefix}${markdown}`,
+				this.appendTechnicalMetadata(`${prefix}${markdown}`, technicalMetadata),
 				{ line: subtask.lineNumber, ch: 0 },
 				{ line: subtask.lineNumber, ch: currentLine.length }
 			);
@@ -372,6 +377,22 @@ export class TaskCreationService {
 				{ line: lastLine, ch: editor.getLine(lastLine).length }
 			);
 		}
+	}
+
+	private extractTechnicalMetadata(line: string): string[] {
+		return Array.from(
+			line.matchAll(/<!--\s*tasks-nl-[^>]*-->/gu),
+			(match) => match[0]
+		);
+	}
+
+	private appendTechnicalMetadata(line: string, metadata: string[]): string {
+		const cleanLine = line
+			.replace(/\s*<!--\s*tasks-nl-[^>]*-->/gu, "")
+			.replace(/\s+$/u, "");
+		return metadata.length > 0
+			? `${cleanLine} ${metadata.join(" ")}`
+			: cleanLine;
 	}
 
 	private formatEditedTask(text: string): string {
