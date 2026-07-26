@@ -1804,3 +1804,21 @@
 		white-space: nowrap;
 	}
 }
+
+
+/* Tasks NL — readable Workspace search field in light and dark themes. */
+.tasks-nl-workspace-search {
+	background: var(--background-secondary);
+	color: var(--text-normal);
+	-webkit-text-fill-color: var(--text-normal);
+}
+
+.tasks-nl-workspace-search::placeholder {
+	color: var(--text-muted);
+	opacity: 1;
+}
+
+.tasks-nl-workspace-search:focus {
+	background: var(--background-primary);
+	color: var(--text-normal);
+}
