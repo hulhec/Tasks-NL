@@ -1,7 +1,7 @@
 /**
  * Natural-language task entry and Markdown task editing.
  */
-import { App, Modal, Setting, setIcon, TextAreaComponent } from "obsidian";
+import { App, Modal, Platform, Setting, setIcon, TextAreaComponent } from "obsidian";
 import { DutchTaskParser } from "../nlp/DutchTaskParser";
 import { TaskNormalizer } from "../normalizer/TaskNormalizer";
 import { parseTaskLine } from "../parser/TaskLineParser";
@@ -67,17 +67,19 @@ export class NewTaskModal extends Modal {
 		});
 
 		const topActions = contentEl.createDiv({ cls: "tasks-nl-task-top-actions" });
-		const dismissKeyboard = topActions.createEl("button", {
-			cls: "tasks-nl-task-action-button tasks-nl-task-action-keyboard",
-			attr: { type: "button", "aria-label": "Sluit het toetsenbord", title: "Toetsenbord sluiten" },
-		});
-		setIcon(dismissKeyboard, "keyboard-off");
-		dismissKeyboard.createSpan({ text: "Sluit" });
-		dismissKeyboard.addEventListener("click", () => {
-			this.taskInputEl?.blur();
-			const active = document.activeElement;
-			if (active instanceof HTMLElement) active.blur();
-		});
+		if (Platform.isMobile) {
+			const dismissKeyboard = topActions.createEl("button", {
+				cls: "tasks-nl-task-action-button tasks-nl-task-action-keyboard",
+				attr: { type: "button", "aria-label": "Sluit het toetsenbord", title: "Toetsenbord sluiten" },
+			});
+			setIcon(dismissKeyboard, "keyboard-off");
+			dismissKeyboard.createSpan({ text: "Sluit" });
+			dismissKeyboard.addEventListener("click", () => {
+				this.taskInputEl?.blur();
+				const active = document.activeElement;
+				if (active instanceof HTMLElement) active.blur();
+			});
+		}
 
 		const saveButton = topActions.createEl("button", {
 			cls: "mod-cta tasks-nl-task-action-button tasks-nl-task-action-save",
