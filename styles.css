@@ -1818,7 +1818,16 @@
 	opacity: 1;
 }
 
-.tasks-nl-workspace-search:focus {
+.tasks-nl-workspace-search:focus,
+.tasks-nl-workspace-search.is-active {
 	background: var(--background-primary);
-	color: var(--text-normal);
+	color: var(--text-normal) !important;
+	-webkit-text-fill-color: var(--text-normal);
+	caret-color: var(--text-normal);
+}
+
+.tasks-nl-workspace-search.is-active::placeholder {
+	color: var(--text-muted);
+	-webkit-text-fill-color: var(--text-muted);
+	opacity: 1;
 }
