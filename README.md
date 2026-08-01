@@ -13,9 +13,10 @@ Tasks NL lets you capture tasks in natural Dutch, stores them as standard Markdo
 - Natural-language capture for dates, priorities, recurrence, projects, people, and GTD terms.
 - Standard Markdown task lines; your vault remains the source of truth.
 - GTD Workspace with Inbox, current tasks, this week, later, Waiting For, Someday, and Review.
-- Focus positions **1, 2, and 3** without adding tags; focused tasks stay in place and share one subtle highlight colour.
+- Focus positions **1, 2, and 3**, plus one manually selected next-task flag per project; both controls stay compact on desktop, iPad, and phone.
 - Up to two people per task, both visible in the Workspace.
-- Configurable recurrence phrases mapped to English Tasks syntax, including singular and plural intervals such as `elke week`, `elke twee weken`, `elke maand`, and `elke drie maanden`.
+- Optional start dates introduced only by configurable words such as `start op` and `vanaf`; Actuals includes tasks while their start-to-due period overlaps today/tomorrow.
+- Simplified recurrence: choose `elke` or `om de`; arbitrary day, week, month, and year intervals map automatically to English Tasks `every` syntax.
 - Desktop, iPad, and phone layouts.
 
 ## Workspace
@@ -45,12 +46,7 @@ Tasks NL does not create a visible settings file in your notes structure.
 
 ## Configurable recurrence
 
-Each recurrence definition contains:
-
-1. the phrase you type, for example `elke twee weken`;
-2. the English Tasks instruction, for example `every 2 weeks`.
-
-Both singular and plural week/month expressions are recognised. You can also add English or other custom phrases.
+Choose either `elke` or `om de` as the input phrase. Tasks NL recognises every positive interval, for example `elke 3 dagen`, `elke 4 weken`, or `om de 6 maanden`, and writes standard `every` syntax automatically.
 
 <img src="image/i-capture.png" width="900" alt="Tasks NL capture and recurrence settings">
 
@@ -98,13 +94,13 @@ Restart Obsidian, then enable **Tasks NL** under Community plugins.
 
 ## Release files
 
-A GitHub release for version `1.1.1-beta.2` must contain these files as individual assets:
+A GitHub release for version `1.4.1-beta` must contain these files as individual assets:
 
 - `main.js`
 - `manifest.json`
 - `styles.css`
 
-The GitHub tag must exactly match the version in `manifest.json`: `1.1.1-beta.2`.
+The GitHub tag must exactly match the version in `manifest.json`: `1.4.1-beta`.
 
 ## Privacy and network use
 

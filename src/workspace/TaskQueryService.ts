@@ -20,14 +20,14 @@ export class TaskQueryService {
 		tomorrow.setDate(tomorrow.getDate() + 1);
 
 		const tomorrowIso = this.toIsoDate(tomorrow);
+		const todayIso = this.toIsoDate(today);
 
 		return tasks
-			.filter(
-				(task) =>
-					!task.voltooid &&
-					task.vervalDatum !== undefined &&
-					task.vervalDatum <= tomorrowIso
-			)
+			.filter((task) => {
+				if (task.voltooid || task.vervalDatum === undefined) return false;
+				if (!task.startDatum) return task.vervalDatum <= tomorrowIso;
+				return task.startDatum <= tomorrowIso && task.vervalDatum >= todayIso;
+			})
 			.sort((a, b) =>
 				(a.vervalDatum ?? "").localeCompare(
 					b.vervalDatum ?? ""

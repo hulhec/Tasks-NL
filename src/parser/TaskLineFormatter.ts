@@ -19,6 +19,7 @@ export class TaskLineFormatter {
 			this.priorityEmoji(task.prioriteit),
 			task.repeat ? `🔁 ${task.repeat.tasksText}` : "",
 			task.repeat && !this.keepCompletedRecurringTask ? "🏁 delete" : "",
+			task.startDatum ? `⏳ ${task.startDatum}` : "",
 			task.datum ? `📅 ${task.datum}` : "",
 			...task.hashtags,
 		];

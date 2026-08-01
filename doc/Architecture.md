@@ -2,6 +2,10 @@
 
 Version: 0.1 (Draft)
 
+## 1.4.1-beta planning metadata
+
+Optional start dates use the Tasks-compatible `⏳ YYYY-MM-DD` marker and remain hidden in Workspace rows. Project-next selection uses the hidden `<!-- tasks-nl-project-next -->` marker; assignment removes that marker from other tasks with the same configured project hashtag. Focus metadata remains independent. Actuals treats tasks with a start date as an interval and tasks without one with the legacy due-date rule.
+
 ## Vision
 
 Tasks NL allows users to write tasks in natural Dutch.

@@ -4,7 +4,6 @@
 <div align="center">
   <img src="image/tasks-nl-v1-banner.png" width="900" alt="Tasks NL Workspace and language support">
 
-
 ## Synchronising settings
 
 Tasks NL stores settings in Obsidian’s standard plugin file:
@@ -19,6 +18,13 @@ See the [Obsidian Sync settings guide](https://obsidian.md/help/sync/settings).
 
 Tasks NL does not create a visible settings file among your notes.
 </div>
+
+## New in 1.4.1-beta
+
+- Add an optional start date only with configurable phrases such as `start op` and `vanaf`. The Workspace hides this technical date; Actuals uses the start-to-due period.
+- Choose one recurrence input phrase, `elke` or `om de`. Any positive number of days, weeks, months, or years is written automatically as Tasks `every` syntax.
+- Manually flag one next task per project beside focus positions 1–3. Choosing another task in the same project moves the flag.
+- The additional flag column is responsive on desktop, tablet, and phone.
 
 # Tasks NL – English Manual
 
@@ -359,4 +365,3 @@ To maximize compatibility, Tasks NL uses the same task syntax and icons where ap
 This compatibility allows users to migrate between both plugins or use them together while keeping their Markdown task files fully compatible.
 
 **Tasks** is an official Obsidian Community Plugin. All credit for the original task format, syntax and concepts belongs to the Tasks project and its contributors. Tasks NL is an independent project inspired by the Tasks plugin and designed to be compatible with its task format.
-

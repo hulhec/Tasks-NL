@@ -13,6 +13,8 @@ export interface TaskInterpretation {
 	origineleTekst: string;
 	datumTekst?: string;
 	datum?: string;
+	startDatumTekst?: string;
+	startDatum?: string;
 	prioriteit: InterpretationPriority;
 	hashtags: string[];
 	repeat?: RepeatRule;

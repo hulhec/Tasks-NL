@@ -27,17 +27,23 @@ export class DutchTaskParser {
 	private readonly repeatRecognizer: RepeatRecognizer;
 	private readonly repeatResolver = new RepeatResolver();
 	private readonly dictionaryEngine: DictionaryEngine;
+	private readonly startDateWords: string[];
 
 	constructor(settings: TasksNLSettings) {
-		this.repeatRecognizer = new RepeatRecognizer(settings.repeatDefinitions);
+		this.repeatRecognizer = new RepeatRecognizer(settings.repeatKeyword);
 		this.dictionaryEngine = new DictionaryEngine(settings);
+		this.startDateWords = settings.startDateWords;
 	}
 
 	parse(invoer: string): TaskInterpretation {
 		const origineleTekst = invoer.trim();
 		const woorden = origineleTekst ? origineleTekst.split(/\s+/u) : [];
 
-		const dateResult = this.dateRecognizer.recognize(origineleTekst);
+		const startResult = this.recognizeStartDate(origineleTekst);
+		const dueInput = startResult?.fullText
+			? this.removeExactPhrase(origineleTekst, startResult.fullText)
+			: origineleTekst;
+		const dateResult = this.dateRecognizer.recognize(dueInput);
 		const priorityResult = this.priorityRecognizer.recognize(origineleTekst);
 		const repeat = this.repeatRecognizer.recognize(origineleTekst);
 
@@ -47,6 +53,9 @@ export class DutchTaskParser {
 			: repeat
 				? this.repeatResolver.resolveInitialDueDate(repeat)
 				: undefined;
+		const startDatum = startResult
+			? this.dateResolver.resolve(startResult.dateText)
+			: undefined;
 		const dictionaryMatches = this.dictionaryEngine.findMatches(origineleTekst);
 
 		const hashtags = [
@@ -59,6 +68,7 @@ export class DutchTaskParser {
 
 		const metadataPhrases = [
 			...(datumTekst ? [datumTekst] : []),
+			...(startResult ? [startResult.fullText] : []),
 			...(priorityResult.matchedText ? [priorityResult.matchedText] : []),
 			...(repeat ? [repeat.originalText] : []),
 			...dictionaryMatches.map((match) => match.matchedText),
@@ -69,11 +79,30 @@ export class DutchTaskParser {
 			origineleTekst,
 			datumTekst,
 			datum,
+			startDatumTekst: startResult?.fullText,
+			startDatum,
 			prioriteit: priorityResult.priority,
 			hashtags,
 			repeat,
 			metadataPhrases,
 			resterendeWoorden: woorden,
 		};
+	}
+
+	private recognizeStartDate(input: string): { fullText: string; dateText: string } | undefined {
+		for (const word of [...this.startDateWords].sort((a, b) => b.length - a.length)) {
+			const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			const match = input.match(new RegExp(`\\b${escaped}\\b\\s+(.+)$`, "iu"));
+			if (!match?.[1]) continue;
+			const recognized = this.dateRecognizer.recognize(match[1]);
+			if (!recognized.datumTekst) continue;
+			return { fullText: `${word} ${recognized.datumTekst}`, dateText: recognized.datumTekst };
+		}
+		return undefined;
+	}
+
+	private removeExactPhrase(input: string, phrase: string): string {
+		const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		return input.replace(new RegExp(escaped, "iu"), " ");
 	}
 }

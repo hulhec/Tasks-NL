@@ -9,8 +9,13 @@ export function parseTaskLine(line: string): Task | null {
 	const content = match[2];
 	const focusMatch = content.match(/<!--\s*tasks-nl-focus:([123])\s*-->/u);
 	const focusStatus = focusMatch ? (Number(focusMatch[1]) as 1 | 2 | 3) : undefined;
-	const cleanContent = content.replace(/<!--\s*tasks-nl-focus:[123]\s*-->/gu, "").trim();
+	const nextProjectTask = /<!--\s*tasks-nl-project-next\s*-->/u.test(content);
+	const cleanContent = content
+		.replace(/<!--\s*tasks-nl-focus:[123]\s*-->/gu, "")
+		.replace(/<!--\s*tasks-nl-project-next\s*-->/gu, "")
+		.trim();
 	const dueDate = findDisplayDate(cleanContent);
+	const startDate = cleanContent.match(/⏳\s+(\d{4}-\d{2}-\d{2})/u)?.[1];
 	const repeat = cleanContent.match(
 		/🔁\s+(.+?)(?=\s+🏁|\s+(?:📅|⏳|🛫|🛬|➕|✅)|\s+#[\p{L}\p{N}_/-]+|$)/u
 	)?.[1]?.trim();
@@ -38,14 +43,16 @@ export function parseTaskLine(line: string): Task | null {
 		voltooid: match[1].toLowerCase() === "x",
 		prioriteit: priority,
 		vervalDatum: dueDate,
+		startDatum: startDate,
 		herhaling: repeat,
 		focusStatus,
+		nextProjectTask,
 		hashtags,
 	};
 }
 
 function findDisplayDate(content: string): string | undefined {
-	const preferredMarkers = ["📅", "⏳", "🛫", "🛬", "➕", "✅"];
+	const preferredMarkers = ["📅", "🛫", "🛬", "➕", "✅"];
 
 	for (const marker of preferredMarkers) {
 		const escapedMarker = escapeRegExp(marker);

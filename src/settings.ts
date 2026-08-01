@@ -50,6 +50,8 @@ export interface TasksNLSettings {
 	showWorkspaceRibbonIcon: boolean;
 	showStatusBarItem: boolean;
 	showPreview: boolean;
+	startDateWords: string[];
+	repeatKeyword: "elke" | "om de";
 	workspaceExcludedTags: string[];
 	workspaceWidgets: {
 		today: boolean;
@@ -80,6 +82,8 @@ export const DEFAULT_SETTINGS: TasksNLSettings = {
 	showWorkspaceRibbonIcon: true,
 	showStatusBarItem: false,
 	showPreview: true,
+	startDateWords: ["start op", "vanaf"],
+	repeatKeyword: "elke",
 	workspaceExcludedTags: ["#reminder"],
 	workspaceWidgets: {
 		today: true,
@@ -243,6 +247,9 @@ export function mergeSettings(saved: Partial<TasksNLSettings> | null): TasksNLSe
 		showStatusBarItem:
 			source.showStatusBarItem ?? DEFAULT_SETTINGS.showStatusBarItem,
 		showPreview: source.showPreview ?? DEFAULT_SETTINGS.showPreview,
+		startDateWords: (source.startDateWords ?? DEFAULT_SETTINGS.startDateWords)
+			.map((word) => word.trim().toLocaleLowerCase("nl-NL")).filter(Boolean),
+		repeatKeyword: source.repeatKeyword === "om de" ? "om de" : "elke",
 		workspaceExcludedTags: normalizeWorkspaceExcludedTags(
 			source.workspaceExcludedTags ?? DEFAULT_SETTINGS.workspaceExcludedTags
 		),
@@ -499,37 +506,29 @@ export class TasksNLSettingTab extends PluginSettingTab {
 	}
 
 	private renderRepeatSection(containerEl: HTMLElement): void {
-		new Setting(containerEl).setName(this.settingText("Herhalingsopdrachten", "Recurrence commands")).setHeading();
-		containerEl.createEl("p", {
-			text: this.settingText(
-				"Voer links de tekst in die je wilt typen en rechts de Engelse Tasks-instructie. Enkelvoud en meervoud worden herkend, bijvoorbeeld ‘elke week’, ‘elke twee weken’ en ‘elke drie maanden’.",
-				"Enter the phrase you want to type in the left field and the English Tasks recurrence instruction in the right field. Singular and plural intervals are supported, for example ‘every week’, ‘every two weeks’, and ‘every three months’."
-			),
-			cls: "setting-item-description",
-		});
-		for (const [index, definition] of this.plugin.settings.repeatDefinitions.entries()) {
-			new Setting(containerEl)
-				.setName(`${this.settingText("Herhaling", "Recurrence")} ${index + 1}`)
-				.setDesc(this.settingText("Veld 1: invoertekst. Veld 2: Engelse Tasks-instructie.", "Field 1: input phrase. Field 2: English Tasks instruction."))
-				.addText((text) => text.setPlaceholder("volgende week").setValue(definition.input).onChange(async (value) => {
-					definition.input = value;
+		new Setting(containerEl).setName(this.settingText("Datums en herhaling", "Dates and recurrence")).setHeading();
+		new Setting(containerEl)
+			.setName(this.settingText("Startwoorden", "Start-date words"))
+			.setDesc(this.settingText("Komma-gescheiden woorden die expliciet een optionele startdatum invoeren. Zonder zo'n woord wordt alleen de einddatum gebruikt.", "Comma-separated words that explicitly introduce an optional start date. Without one, only the due date is used."))
+			.addText((text) => text
+				.setPlaceholder("start op, vanaf")
+				.setValue(this.plugin.settings.startDateWords.join(", "))
+				.onChange(async (value) => {
+					this.plugin.settings.startDateWords = parseSynonyms(value);
 					await this.persist();
-				}))
-				.addText((text) => text.setPlaceholder("every week").setValue(definition.tasksText).onChange(async (value) => {
-					definition.tasksText = value;
-					await this.persist();
-				}))
-				.addButton((button) => button.setButtonText(this.settingText("Verwijder", "Remove")).onClick(async () => {
-					this.plugin.settings.repeatDefinitions.splice(index, 1);
-					await this.persist();
-					this.display();
 				}));
-		}
-		new Setting(containerEl).addButton((button) => button.setButtonText(this.settingText("Herhaling toevoegen", "Add recurrence")).setCta().onClick(async () => {
-			this.plugin.settings.repeatDefinitions.push({ input: "", tasksText: "every week" });
-			await this.persist();
-			this.display();
-		}));
+
+		new Setting(containerEl)
+			.setName(this.settingText("Herhalingswoord", "Recurrence keyword"))
+			.setDesc(this.settingText("Kies het woord dat je invoert. Elk positief aantal dagen, weken, maanden of jaren wordt automatisch naar ‘every’ vertaald.", "Choose the phrase you type. Any positive number of days, weeks, months, or years is translated automatically to ‘every’."))
+			.addDropdown((dropdown) => dropdown
+				.addOption("elke", "elke")
+				.addOption("om de", "om de")
+				.setValue(this.plugin.settings.repeatKeyword)
+				.onChange(async (value) => {
+					this.plugin.settings.repeatKeyword = value === "om de" ? "om de" : "elke";
+					await this.persist();
+				}));
 	}
 
 	private renderTemplatesSection(containerEl: HTMLElement): void {

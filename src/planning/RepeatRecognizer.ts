@@ -12,7 +12,6 @@
  */
 
 import { RepeatPosition, RepeatRule, RepeatUnit } from "./RepeatRule";
-import { RepeatDefinition } from "../settings";
 
 const WEEKDAYS: Record<string, { index: number; english: string }> = {
 	zondag: { index: 0, english: "Sunday" },
@@ -25,7 +24,7 @@ const WEEKDAYS: Record<string, { index: number; english: string }> = {
 };
 
 export class RepeatRecognizer {
-	constructor(private readonly definitions: RepeatDefinition[] = []) {}
+	constructor(private readonly keyword: "elke" | "om de" = "elke") {}
 
 	recognize(input: string): RepeatRule | undefined {
 		const normalized = input
@@ -34,11 +33,10 @@ export class RepeatRecognizer {
 			.trim();
 
 
-		const configured = this.recognizeConfigured(normalized);
-		if (configured) return configured;
+		const keyword = this.keyword.replace(/ /gu, "\\s+");
 
 		const monthlyWeekday = normalized.match(
-			/\b(?:iedere|elke|elk)\s+(eerste|laatste)\s+(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)(?:\s+van\s+de\s+maand)?\b/u
+			new RegExp(`\\b${keyword}\\s+(eerste|laatste)\\s+(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)(?:\\s+van\\s+de\\s+maand)?\\b`, "u")
 		);
 		if (monthlyWeekday?.[0] && monthlyWeekday[1] && monthlyWeekday[2]) {
 			const weekday = WEEKDAYS[monthlyWeekday[2]];
@@ -57,7 +55,7 @@ export class RepeatRecognizer {
 		}
 
 		const weekdayMatch = normalized.match(
-			/\b(?:iedere|elke|elk)\s+(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)\b/u
+			new RegExp(`\\b${keyword}\\s+(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)\\b`, "u")
 		);
 		if (weekdayMatch?.[0] && weekdayMatch[1]) {
 			const weekday = WEEKDAYS[weekdayMatch[1]];
@@ -73,7 +71,7 @@ export class RepeatRecognizer {
 		}
 
 		const intervalMatch = normalized.match(
-			/\b(?:iedere|elke|elk)\s+(?:(\d+|een|één|twee|drie|vier|vijf|zes|zeven|acht|negen|tien|elf|twaalf|veertien)\s+)?(dag|dagen|week|weken|maand|maanden|jaar|jaren)\b/u
+			new RegExp(`\\b${keyword}\\s+(?:(\\d+|een|één|twee|drie|vier|vijf|zes|zeven|acht|negen|tien|elf|twaalf|veertien)\\s+)?(dag|dagen|week|weken|maand|maanden|jaar|jaren)\\b`, "u")
 		);
 		if (!intervalMatch?.[0] || !intervalMatch[2]) return undefined;
 
@@ -89,31 +87,6 @@ export class RepeatRecognizer {
 			every,
 			unit,
 		};
-	}
-
-	private recognizeConfigured(normalizedInput: string): RepeatRule | undefined {
-		for (const definition of this.definitions) {
-			const input = definition.input.trim().toLocaleLowerCase("nl-NL");
-			if (!input || !this.containsPhrase(normalizedInput, input)) continue;
-			const parsed = this.parseTasksText(definition.tasksText.trim());
-			if (!parsed) continue;
-			return { ...parsed, originalText: definition.input.trim(), tasksText: definition.tasksText.trim() };
-		}
-		return undefined;
-	}
-
-	private containsPhrase(input: string, phrase: string): boolean {
-		const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-		return new RegExp(`(^|[\\s,.;:!?()])${escaped}(?=$|[\\s,.;:!?()])`, "u").test(input);
-	}
-
-	private parseTasksText(value: string): Omit<RepeatRule, "originalText" | "tasksText"> | undefined {
-		const normalized = value.toLocaleLowerCase("en-US").replace(/\s+/gu, " ").trim();
-		const match = normalized.match(/^every\s+(?:(\d+)\s+)?(day|days|week|weeks|month|months|year|years)$/u);
-		if (!match?.[2]) return undefined;
-		const every = Number(match[1] ?? "1");
-		const unit = match[2].replace(/s$/u, "") as RepeatUnit;
-		return Number.isFinite(every) && every > 0 ? { every, unit } : undefined;
 	}
 
 	private toUnit(value: string): RepeatUnit | undefined {

@@ -46,6 +46,7 @@ export class TaskRepository {
 					// Recurrence is deliberately not inherited, preventing a new
 					// subtask from being generated when the final step is completed.
 					task.vervalDatum = parent.vervalDatum;
+					task.startDatum = parent.startDatum;
 					task.prioriteit = parent.prioriteit;
 					task.hashtags = [...parent.hashtags];
 					task.herhaling = undefined;

@@ -294,6 +294,7 @@ export class NewTaskModal extends Modal {
 			natural.datum ??
 			existing?.vervalDatum ??
 			undefined;
+		const startDate = natural.startDatum ?? existing?.startDatum;
 
 		const recurrence = natural.repeat
 			? this.formatRepeat(natural.repeat)
@@ -324,6 +325,14 @@ export class NewTaskModal extends Modal {
 		const metadata = this.previewEl.createDiv({
 			cls: "tasks-nl-preview-metadata",
 		});
+
+		this.addMetadata(
+			metadata,
+			"⏳ Start",
+			natural.startDatumTekst && natural.startDatum
+				? `${natural.startDatumTekst} (${natural.startDatum})`
+				: startDate ?? "-"
+		);
 
 		this.addMetadata(
 			metadata,
@@ -361,7 +370,7 @@ export class NewTaskModal extends Modal {
 			 * Een natuurlijk woord zoals "morgen" blijft staan.
 			 */
 			.replace(
-				/📅\s*\d{4}-\d{2}-\d{2}/gu,
+				/(?:📅|⏳)\s*\d{4}-\d{2}-\d{2}/gu,
 				" "
 			)
 
@@ -405,7 +414,7 @@ export class NewTaskModal extends Modal {
 		value: string
 	): boolean {
 		return (
-			/[📅🔁🏁⏫🔺🔼🔽⏬]/u.test(value) ||
+			/[📅⏳🔁🏁⏫🔺🔼🔽⏬]/u.test(value) ||
 			/(?:^|\s)#[\p{L}\p{N}_/-]+/u.test(value)
 		);
 	}
@@ -432,6 +441,14 @@ export class NewTaskModal extends Modal {
 		const metadata = this.previewEl.createDiv({
 			cls: "tasks-nl-preview-metadata",
 		});
+
+		this.addMetadata(
+			metadata,
+			"⏳ Start",
+			normalized.startDatumTekst && normalized.startDatum
+				? `${normalized.startDatumTekst} (${normalized.startDatum})`
+				: normalized.startDatum ?? "-"
+		);
 
 		this.addMetadata(
 			metadata,

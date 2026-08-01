@@ -390,6 +390,7 @@ export class TaskCreationService {
 		}[priority];
 		const repeat = natural.repeat?.tasksText ?? explicit.herhaling;
 		const date = natural.datum ?? explicit.vervalDatum;
+		const startDate = natural.startDatum ?? explicit.startDatum;
 		const hashtags = Array.from(new Set([...explicit.hashtags, ...natural.hashtags]));
 
 		return [
@@ -398,6 +399,7 @@ export class TaskCreationService {
 			priorityEmoji,
 			repeat ? `🔁 ${repeat}` : "",
 			repeat && !this.settings.keepCompletedRecurringTask ? "🏁 delete" : "",
+			startDate ? `⏳ ${startDate}` : "",
 			date ? `📅 ${date}` : "",
 			...hashtags,
 		].filter(Boolean).join(" ");
@@ -414,6 +416,7 @@ export class TaskCreationService {
 					"- [ ]", parsed.titel, priority,
 					parsed.herhaling ? `🔁 ${parsed.herhaling}` : "",
 					parsed.herhaling && !this.settings.keepCompletedRecurringTask ? "🏁 delete" : "",
+					parsed.startDatum ? `⏳ ${parsed.startDatum}` : "",
 					parsed.vervalDatum ? `📅 ${parsed.vervalDatum}` : "",
 					...parsed.hashtags,
 				].filter(Boolean).join(" ");

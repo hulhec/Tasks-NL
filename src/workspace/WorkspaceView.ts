@@ -12,6 +12,7 @@ import { Task } from "../models/Task";
 import { TaskQueryService } from "./TaskQueryService";
 import { refreshOpenMarkdownViews } from "../services/OpenFileSyncService";
 import { normalizeWorkspaceExcludedTags } from "../settings";
+import { parseTaskLine } from "../parser/TaskLineParser";
 
 export const TASKS_NL_WORKSPACE_VIEW = "tasks-nl-workspace";
 
@@ -780,7 +781,7 @@ export class TasksNLWorkspaceView extends ItemView {
 		sectionId: WorkspaceSectionId
 	): void {
 		const row = container.createEl("button", {
-			cls: `tasks-nl-workspace-taskrow${task.parentId ? " is-subtask" : ""}${task.focusStatus ? " is-focus" : ""}`,
+			cls: `tasks-nl-workspace-taskrow${task.parentId ? " is-subtask" : ""}${task.focusStatus ? " is-focus" : ""}${task.nextProjectTask ? " is-project-next" : ""}`,
 			attr: {
 				type: "button",
 				"aria-label": `Open ${task.titel || "Task"}`,
@@ -862,6 +863,34 @@ export class TasksNLWorkspaceView extends ItemView {
 		focus.addEventListener("click", openFocusMenu);
 		focus.addEventListener("keydown", (event) => {
 			if (event.key === "Enter" || event.key === " ") openFocusMenu(event);
+		});
+
+		const projectTag = task.hashtags.find(
+			(hashtag) => this.getMetadataDefinition(hashtag)?.type === "project"
+		);
+		const projectNext = row.createSpan({
+			cls: `tasks-nl-workspace-project-next${task.nextProjectTask ? " is-active" : ""}${projectTag ? "" : " is-disabled"}`,
+			text: task.nextProjectTask ? "⚑" : "⚐",
+			attr: {
+				role: "button",
+				tabindex: projectTag ? "0" : "-1",
+				"aria-disabled": projectTag ? "false" : "true",
+				"aria-label": task.nextProjectTask
+					? (isDutch ? "Verwijder eerstvolgende projecttaak" : "Clear next project task")
+					: (isDutch ? "Markeer als eerstvolgende projecttaak" : "Mark as next project task"),
+				title: projectTag
+					? (isDutch ? "Eerstvolgende taak van dit project" : "Next task for this project")
+					: (isDutch ? "Voeg eerst een project toe" : "Add a project first"),
+			},
+		});
+		const toggleProjectNext = (event: Event): void => {
+			event.preventDefault();
+			event.stopPropagation();
+			if (projectTag) void this.setProjectNext(task, projectTag, !task.nextProjectTask);
+		};
+		projectNext.addEventListener("click", toggleProjectNext);
+		projectNext.addEventListener("keydown", (event) => {
+			if (event.key === "Enter" || event.key === " ") toggleProjectNext(event);
 		});
 
 		//task title
@@ -972,6 +1001,43 @@ export class TasksNLWorkspaceView extends ItemView {
 		row.addEventListener("click", () => {
 			void this.openTask(task);
 		});
+	}
+
+	private async setProjectNext(task: Task, projectTag: string, active: boolean): Promise<void> {
+		if (!task.bronBestand || task.regelNummer === undefined) return;
+		const marker = /\s*<!--\s*tasks-nl-project-next\s*-->/gu;
+		const normalizedProject = this.normalizeHashtag(projectTag);
+		const modifiedFiles: TFile[] = [];
+
+		for (const file of this.plugin.app.vault.getMarkdownFiles()) {
+			const content = await this.plugin.app.vault.cachedRead(file);
+			const lines = content.split("\n");
+			let changed = false;
+			for (let index = 0; index < lines.length; index += 1) {
+				const line = lines[index] ?? "";
+				const parsed = parseTaskLine(line);
+				const isTarget = file.path === task.bronBestand && index === task.regelNummer;
+				const sameProject = parsed?.hashtags.some(
+					(tag) => this.normalizeHashtag(tag) === normalizedProject
+				);
+				if (sameProject && marker.test(line)) {
+					lines[index] = line.replace(marker, "").replace(/\s+$/u, "");
+					changed = true;
+				}
+				marker.lastIndex = 0;
+				if (isTarget && active) {
+					lines[index] = `${(lines[index] ?? "").replace(marker, "").replace(/\s+$/u, "")} <!-- tasks-nl-project-next -->`;
+					changed = true;
+				}
+			}
+			if (changed) {
+				await this.plugin.app.vault.modify(file, lines.join("\n"));
+				modifiedFiles.push(file);
+			}
+		}
+
+		await Promise.all(modifiedFiles.map((file) => refreshOpenMarkdownViews(this.plugin.app, file)));
+		await this.refresh();
 	}
 
 	private async setTaskFocus(
