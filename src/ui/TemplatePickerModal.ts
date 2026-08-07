@@ -25,7 +25,13 @@ export class TemplatePickerModal extends Modal {
 		if (this.templates.length === 0) {
 			list.createEl("p", { text: "No reviews available." });
 		}
-		for (const template of this.templates) {
+		const order = ["day-journal", "week-review", "month-review"];
+		const templates = [...this.templates].sort((a, b) => {
+			const aIndex = order.indexOf(a.id);
+			const bIndex = order.indexOf(b.id);
+			return (aIndex < 0 ? order.length : aIndex) - (bIndex < 0 ? order.length : bIndex);
+		});
+		for (const template of templates) {
 			const button = list.createEl("button", {
 				cls: "tasks-nl-template-card",
 				attr: { type: "button", "aria-label": `Use ${template.name}` },

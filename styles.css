@@ -2340,3 +2340,58 @@
 		-webkit-line-clamp: 2;
 	}
 }
+/* Journal template tabs */
+.tasks-nl-settings-navigation { display: flex; gap: 4px; margin: 16px 0 22px; border-bottom: 1px solid var(--background-modifier-border); }
+.tasks-nl-settings-navigation-tab { padding: 9px 16px; border-radius: var(--button-radius) var(--button-radius) 0 0; background: transparent; box-shadow: none; }
+.tasks-nl-settings-navigation-tab.is-active { background: var(--interactive-accent); color: var(--text-on-accent); }
+.tasks-nl-settings-pane { display: none; }
+.tasks-nl-settings-pane.is-active { display: block; }
+.tasks-nl-template-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 16px 0 22px; padding: 4px; border-radius: var(--button-radius); background: var(--background-secondary); }
+.tasks-nl-template-tab { padding: 8px 14px; border-radius: var(--button-radius); background: transparent; box-shadow: none; }
+.tasks-nl-template-tab.is-active { background: var(--interactive-accent); color: var(--text-on-accent); }
+.tasks-nl-review-settings-layout { display: none; }
+.tasks-nl-review-settings-layout.is-active { display: grid; }
+.tasks-nl-review-settings-controls { padding-right: 8px; }
+.tasks-nl-review-settings-controls .setting-item-heading { margin-top: 20px; }
+.tasks-nl-review-settings-controls .setting-item-heading:first-child { margin-top: 0; }
+.tasks-nl-template-properties { width: 100%; min-height: 110px; font-family: var(--font-monospace); }
+.tasks-nl-review-markdown-editor { min-height: 360px; }
+@media (min-width: 900px) {
+	.tasks-nl-review-settings-preview { position: sticky; top: 16px; align-self: start; max-height: calc(100vh - 80px); overflow: auto; }
+}
+.tasks-nl-journal-list {
+	display: grid;
+	gap: 0.45rem;
+	margin: 0.5rem 0 1rem;
+}
+
+.tasks-nl-journal-item {
+	display: flex;
+	align-items: baseline;
+	gap: 0.65rem;
+}
+
+.tasks-nl-journal-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 1.65rem;
+	min-width: 1.65rem;
+	height: 1.65rem;
+	border-radius: 999px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-size: 0.9rem;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.tasks-nl-journal-next-project-steps .tasks-nl-journal-badge {
+	background: transparent;
+	color: inherit;
+	font-size: 1.1rem;
+}
+
+.tasks-nl-journal-link {
+	min-width: 0;
+}

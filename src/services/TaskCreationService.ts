@@ -9,6 +9,7 @@ import { parseTaskLine } from "../parser/TaskLineParser";
 import { TaskTemplate, TasksNLSettings } from "../settings";
 import type { EditableSubtask } from "../ui/NewTaskModal";
 import { refreshOpenMarkdownViews } from "./OpenFileSyncService";
+import { synchronizeDailyJournalBlocks } from "../journal/DailyJournalTemplate";
 
 export class TaskCreationService {
 	constructor(
@@ -24,7 +25,7 @@ export class TaskCreationService {
 		options: { openFile?: boolean; duplicateMode?: "ask" | "skip" } = {}
 	): Promise<TFile | null> {
 		try {
-			if (!text.trim()) {
+			if (!text.trim() && template.id !== "day-journal") {
 				new Notice("Enter a task first.");
 				return null;
 			}
@@ -42,9 +43,9 @@ export class TaskCreationService {
 					? this.nextCopyPath(folder, safeFileName)
 					: choice.path;
 			}
-			const mainTask = this.formatNaturalLanguage(text);
+			const mainTask = text.trim() ? this.formatNaturalLanguage(text) : "";
 			const childTasks = subtasks.map((item) => `  ${this.formatNaturalLanguage(item)}`);
-			const tasks = [mainTask, ...childTasks].join("\n");
+			const tasks = [mainTask, ...childTasks].filter(Boolean).join("\n");
 			const actualFileName = path.split("/").pop()?.replace(/\.md$/u, "") ?? safeFileName;
 			const note = this.renderReviewTemplate(template, actualFileName, tasks);
 			const file = await this.app.vault.create(path, note.endsWith("\n") ? note : `${note}\n`);
@@ -65,24 +66,63 @@ export class TaskCreationService {
 	}
 
 	private renderReviewTemplate(template: TaskTemplate, fileName: string, tasks: string): string {
-		const now = moment();
 		let source = template.noteTemplate || "##### Tasks\n\n{{TASKS}}\n";
-		if (!/\{\{tasks\}\}/iu.test(source)) {
+		if (template.id === "day-journal") {
+			source = synchronizeDailyJournalBlocks(
+				source,
+				template.includeTopThree ?? false,
+				template.includeNextProjectSteps ?? false,
+			);
+		}
+		if (template.id !== "day-journal" && !/\{(?:\{tasks\}|tasks)\}/iu.test(source)) {
 			const lines = source.split("\n");
 			const firstHeading = lines.findIndex((line) => /^#{1,6}\s+/u.test(line));
 			lines.splice(firstHeading >= 0 ? firstHeading + 1 : 0, 0, "", "{{TASKS}}", "");
 			source = lines.join("\n");
 		}
-		return source
-			.replace(/\{\{tasks\}\}/giu, tasks)
-			.replace(/\{\{filename\}\}/giu, fileName)
-			.replace(/\{\{date\}\}/giu, now.format("YYYY-MM-DD"))
-			.replace(/\{\{day\}\}/giu, now.format("dddd"))
-			.replace(/\{\{week\}\}/giu, now.format("WW"))
-			.replace(/\{\{month\}\}/giu, now.format("MMMM"))
-			.replace(/\{\{month_number\}\}/giu, now.format("MM"))
-			.replace(/\{\{year\}\}/giu, now.format("YYYY"))
-			.replace(/\{\{review_type\}\}/giu, template.name);
+		const properties = this.cleanProperties(template.properties ?? "");
+		const rendered = this.replaceTemplateVariables(source, fileName, {
+			tasks,
+			review_type: template.name,
+		});
+		if (!properties) return rendered;
+
+		const resolvedProperties = this.replaceTemplateVariables(properties, fileName);
+		const existingFrontmatter = rendered.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/u);
+		if (!existingFrontmatter) return `---\n${resolvedProperties}\n---\n${rendered}`;
+
+		const body = rendered.slice(existingFrontmatter[0].length);
+		const currentProperties = existingFrontmatter[1]?.trim() ?? "";
+		const mergedProperties = [currentProperties, resolvedProperties].filter(Boolean).join("\n");
+		return `---\n${mergedProperties}\n---\n${body}`;
+	}
+
+	private cleanProperties(value: string): string {
+		const trimmed = value.trim();
+		const fenced = trimmed.match(/^---\s*\r?\n([\s\S]*?)\r?\n---$/u);
+		return (fenced?.[1] ?? trimmed).trim();
+	}
+
+	private replaceTemplateVariables(
+		value: string,
+		fileName: string,
+		extra: Record<string, string> = {}
+	): string {
+		const now = moment();
+		const variables: Record<string, string> = {
+			filename: fileName,
+			date: now.format("YYYY-MM-DD"),
+			day: now.format("dddd"),
+			week: now.format("WW"),
+			month: now.format("MMMM"),
+			month_number: now.format("MM"),
+			year: now.format("YYYY"),
+			...extra,
+		};
+
+		return value.replace(/\{\{?(tasks|filename|date|day|week|month|month_number|year|review_type)\}?\}/giu, (match, key: string) =>
+			variables[key.toLocaleLowerCase()] ?? match
+		);
 	}
 
 	private nextCopyPath(folder: string, fileName: string): string {
@@ -227,6 +267,7 @@ export class TaskCreationService {
 		}
 
 		const currentLine = editor.getLine(lineNumber);
+		const internalMarkers = currentLine.match(/\s*<!--\s*tasks-nl-(?:focus:[123]|project-next)\s*-->/gu)?.join("") ?? "";
 
 		const prefix =
 			currentLine.match(
@@ -245,7 +286,7 @@ export class TaskCreationService {
 			);
 
 		editor.replaceRange(
-			`${prefix}${markdown}`,
+			`${prefix}${markdown}${internalMarkers}`,
 			{
 				line: lineNumber,
 				ch: 0,
@@ -272,7 +313,8 @@ export class TaskCreationService {
 			if (currentLine === undefined) return content;
 			const prefix = currentLine.match(/^(\s*[-*+]\s+\[[ xX]\]\s*)/u)?.[1] ?? "- [ ] ";
 			const markdown = this.formatEditedTask(text).replace(/^\s*[-*+]\s+\[[ xX]\]\s*/u, "");
-			lines[lineNumber] = `${prefix}${markdown}`;
+			const internalMarkers = currentLine.match(/\s*<!--\s*tasks-nl-(?:focus:[123]|project-next)\s*-->/gu)?.join("") ?? "";
+			lines[lineNumber] = `${prefix}${markdown}${internalMarkers}`;
 			for (const subtask of editedSubtasks) {
 				const line = lines[subtask.lineNumber];
 				const subPrefix = line?.match(/^(\s*[-*+]\s+\[[ xX]\]\s*)/u)?.[1];

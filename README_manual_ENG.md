@@ -19,16 +19,21 @@ See the [Obsidian Sync settings guide](https://obsidian.md/help/sync/settings).
 Tasks NL does not create a visible settings file among your notes.
 </div>
 
-## New in 1.4.1-beta
+## New in 1.5.0
 
 - Add an optional start date only with configurable phrases such as `start op` and `vanaf`. The Workspace hides this technical date; Actuals uses the start-to-due period.
-- Choose one recurrence input phrase, `elke` or `om de`. Any positive number of days, weeks, months, or years is written automatically as Tasks `every` syntax.
+- Enter recurrence phrases as a free comma-separated list; Dutch, English, and other alternatives are supported.
+- Automatically create a daily journal at startup or reload. Folder, filename, properties, and Markdown are configurable; focus 1–3 and next-project steps can be included with two checkboxes.
+- Every newly created daily, weekly, or monthly document opens immediately.
+- Daily-journal content and properties now remain saved after subsequent edits and reloads.
+- Only tasks marked `#tasks-nl-review`, such as weekly and monthly reviews, appear in the Workspace Review section.
+- The formats screen is grouped into creation and schedule, file, and content; all explanations and weekdays follow the selected settings language.
 - Manually flag one next task per project beside focus positions 1–3. Choosing another task in the same project moves the flag.
 - The additional flag column is responsive on desktop, tablet, and phone.
 
 # Tasks NL – English Manual
 
-This manual describes Tasks NL version 1.0.0 for Obsidian. The plugin lets you enter tasks using natural Dutch language, stores them as regular Markdown tasks, and displays them in a GTD-oriented Workspace.
+This manual describes Tasks NL version 1.5.0 for Obsidian. The plugin lets you enter tasks using natural Dutch language, stores them as regular Markdown tasks, and displays them in a GTD-oriented Workspace.
 
 ## 1. General workflow
 
@@ -117,13 +122,21 @@ Defines a first name, last name, alias, and hashtag. This allows people to be re
 
 Use unique aliases and hashtags to prevent ambiguous recognition.
 
-### Reviews
+### Day, week, and month formats
 
-Tasks NL includes templates for weekly and monthly reviews.
+At the top of Settings there are two main tabs: **General** and **Day, week and month formats**. The formats screen uses the order **Day**, **Week**, **Month** and groups fields into **Creation and schedule**, **File**, and **Content**. Each tab has YAML properties and Markdown fields. Properties are written into one frontmatter block or merged with existing frontmatter, without a Markdown heading. Both fields are saved while typing and remain stored after subsequent edits or reloads. Known codes support single or double braces, for example `{DATE}` and `{{DATE}}`; other braces and code blocks remain unchanged. A journal that has already been created is never overwritten. The daily journal defaults to `Kalender/Dagjournaal` and `dddd DD-MMM-YY`, for example `woensdag 05-aug-26.md`. The focus 1–3 and next-project-step switches insert or remove live DataviewJS code in the Markdown template and update the preview immediately. Only tasks marked `#tasks-nl-review` appear in Review.
 
 **Automatic creation**
 
-Automatically creates the relevant review document on the selected weekday.
+For daily journals, Tasks NL checks once at startup or reload whether today's file already exists. Weekly and monthly reviews use the selected weekday.
+
+**Include top 1, 2 and 3 / Include next project steps**
+
+These two switches independently insert actual DataviewJS code blocks into the Markdown template. With **Yes**, the code block is present in the template and its result appears in the preview; with **No**, it is removed completely. In the daily journal, focus tasks are clearly marked with **1**, **2**, or **3**, and next project steps with a flag. The recognition marker lives inside the executed DataviewJS block, so Live Preview shows no separate grey management lines, list bullets, or list accents. Automatic and manual creation synchronize the template immediately before writing the file. Whenever the daily journal is opened, the code queries focus tasks 1–3 or marked next project steps again. The off → on → off → on sequence can be repeated safely without duplicate code blocks.
+
+**Properties**
+
+Free YAML properties without the surrounding `---`. Template variables are supported here too.
 
 **Weekday**
 
@@ -167,7 +180,7 @@ A comma-separated list of hashtags whose tasks are normally hidden, for example:
 #reminder, #birthday, #holiday-idea
 ```
 
-The **Hidden** button in the Workspace displays these hidden tasks. In the included hotfix, tasks are grouped under headings based on the matching excluded hashtag. The hashtag headings are sorted alphabetically, and tasks inside each group use the normal Workspace sorting. Hidden review subtasks are not shown in this overview.
+The **Hidden** button in the Workspace displays these hidden tasks. Tasks are grouped under headings based on the matching excluded hashtag. The hashtag headings are sorted alphabetically, and tasks inside each group use the normal Workspace sorting. Hidden review subtasks are not shown in this overview.
 
 ## 3. Creating a new task
 

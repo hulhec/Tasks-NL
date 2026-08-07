@@ -17,6 +17,7 @@ Tasks NL lets you capture tasks in natural Dutch, stores them as standard Markdo
 - Up to two people per task, both visible in the Workspace.
 - Optional start dates introduced only by configurable words such as `start op` and `vanaf`; Actuals includes tasks while their start-to-due period overlaps today/tomorrow.
 - Simplified recurrence: choose `elke` or `om de`; arbitrary day, week, month, and year intervals map automatically to English Tasks `every` syntax.
+- Automatic daily journal creation at startup or reload, with configurable folder, Moment filename format, properties, free Markdown, and optional focus 1–3 and next-project steps. Every newly created document opens immediately.
 - Desktop, iPad, and phone layouts.
 
 ## Workspace
@@ -46,7 +47,11 @@ Tasks NL does not create a visible settings file in your notes structure.
 
 ## Configurable recurrence
 
-Choose either `elke` or `om de` as the input phrase. Tasks NL recognises every positive interval, for example `elke 3 dagen`, `elke 4 weken`, or `om de 6 maanden`, and writes standard `every` syntax automatically.
+Enter any comma-separated recurrence phrases, such as `elke, om de` or English alternatives. Tasks NL recognises every positive interval and writes standard `every` syntax automatically.
+
+## Day, week, and month formats
+
+At the top of Settings, **General** and **Day, week and month formats** are separate main tabs. The formats screen uses the order **Day**, **Week**, **Month** and groups each form into creation, file, and content sections with a live preview. Each format has a YAML properties field and Markdown template; properties are written or merged into a single frontmatter block. Both fields are saved while typing and remain persistent after further edits or reload. Both `{DATE}` and `{{DATE}}` syntax are supported for known template codes, while other braces and code blocks remain unchanged. A generated journal is never overwritten. The day journal defaults to `Kalender/Dagjournaal` and `dddd DD-MMM-YY` (for example `woensdag 05-aug-26.md`) and is checked once when Tasks NL starts or reloads. The focus 1–3 and next-project-step switches insert or remove live DataviewJS blocks in the Markdown template and update the preview immediately. Only tasks marked `#tasks-nl-review` appear in the Workspace Review section.
 
 <img src="image/i-capture.png" width="900" alt="Tasks NL capture and recurrence settings">
 
@@ -94,13 +99,13 @@ Restart Obsidian, then enable **Tasks NL** under Community plugins.
 
 ## Release files
 
-A GitHub release for version `1.4.1-beta` must contain these files as individual assets:
+A GitHub release for version `1.5.0` must contain these files as individual assets:
 
 - `main.js`
 - `manifest.json`
 - `styles.css`
 
-The GitHub tag must exactly match the version in `manifest.json`: `1.4.1-beta`.
+The GitHub tag must exactly match the version in `manifest.json`: `1.5.0`.
 
 ## Privacy and network use
 

@@ -30,7 +30,7 @@ export class DutchTaskParser {
 	private readonly startDateWords: string[];
 
 	constructor(settings: TasksNLSettings) {
-		this.repeatRecognizer = new RepeatRecognizer(settings.repeatKeyword);
+		this.repeatRecognizer = new RepeatRecognizer(settings.repeatKeywords);
 		this.dictionaryEngine = new DictionaryEngine(settings);
 		this.startDateWords = settings.startDateWords;
 	}

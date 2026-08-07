@@ -19,16 +19,21 @@ Zie de [Obsidian-handleiding voor Sync-instellingen](https://obsidian.md/help/sy
 Tasks NL maakt geen zichtbaar instellingenbestand aan tussen je notities.
 </div>
 
-## Nieuw in 1.4.1-beta
+## Nieuw in 1.5.0
 
 - Voeg alleen met configureerbare woorden zoals `start op` en `vanaf` een optionele startdatum toe. De Workspace toont deze technische startdatum niet; Actuals gebruikt de periode van start- tot einddatum.
-- Kies voor herhaling één invoerwoord: `elke` of `om de`. Elk positief aantal dagen, weken, maanden of jaren wordt automatisch als Tasks-`every` opgeslagen.
+- Vul herhalingswoorden vrij en kommagescheiden in, bijvoorbeeld `elke, om de`; ook andere talen zijn mogelijk.
+- Laat bij opstarten of herladen automatisch een dagjournaal maken. Map, bestandsnaam, properties en Markdown zijn vrij instelbaar; focus 1–3 en eerstvolgende projectstappen kunnen met twee vinkvelden worden opgenomen.
+- Ieder nieuw aangemaakt dag-, week- of maanddocument wordt direct geopend.
+- Dagjournaalinhoud en properties blijven nu na iedere volgende wijziging en herlaadactie opgeslagen.
+- Alleen taken met `#tasks-nl-review`, zoals week- en maandreviews, verschijnen in de Review-sectie van de Workspace.
+- Het formatscherm is gegroepeerd in aanmaken en planning, bestand en inhoud; alle toelichtingen en weekdagen volgen de gekozen instellingentaal.
 - Markeer per project handmatig één eerstvolgende taak met de vlag naast focus 1–3. Een nieuwe keuze binnen hetzelfde project verplaatst de vlag.
 - De extra vlagkolom is responsief afgestemd voor desktop, tablet en telefoon.
 
 # Tasks NL – Nederlandstalige handleiding
 
-Deze handleiding beschrijft Tasks NL versie 1.0.0 voor Obsidian. De plugin laat je taken in natuurlijke Nederlandse tekst invoeren, bewaart ze als gewone Markdown-taken en toont ze in een GTD-georiënteerde Workspace.
+Deze handleiding beschrijft Tasks NL versie 1.5.0 voor Obsidian. De plugin laat je taken in natuurlijke Nederlandse tekst invoeren, bewaart ze als gewone Markdown-taken en toont ze in een GTD-georiënteerde Workspace.
 ## 1. Algemene werkwijze
 
 Tasks NL gebruikt je Markdown-bestanden als bron. Een taak blijft dus een normale regel zoals:
@@ -116,13 +121,21 @@ Legt projectnaam, alias en hashtag vast. Een herkend project kan daardoor als co
 Legt voornaam, achternaam, alias en hashtag vast. Hiermee kun je personen in natuurlijke tekst herkennen en later in de Workspace filteren.
   
 Gebruik unieke aliases en hashtags om dubbelzinnige herkenning te voorkomen.
-### Reviews
+### Dag-, week- en maandformats
 
-Tasks NL bevat sjablonen voor onder meer een weekreview en maandreview.
+Bovenaan Instellingen staan twee hoofdtabbladen: **Algemeen** en **Dag-, week- en maandformats**. Het formatscherm gebruikt altijd de volgorde **Dag**, **Week**, **Maand** en groepeert de velden in **Aanmaken en planning**, **Bestand** en **Inhoud**. Elk tabblad bevat een vrij YAML-propertiesveld en een Markdownformat. Properties worden in één frontmatterblok geschreven of met bestaand frontmatter samengevoegd, zonder Markdown-kop. Beide velden worden tijdens het typen opgeslagen en blijven ook na vervolgwijzigingen of herladen bewaard. Bekende codes werken met enkele of dubbele accolades, bijvoorbeeld `{DATE}` en `{{DATE}}`; overige accolades en codeblokken blijven ongewijzigd. Een eenmaal aangemaakt journaal wordt nooit overschreven. Het dagjournaal gebruikt standaard `Kalender/Dagjournaal` en `dddd DD-MMM-YY`, bijvoorbeeld `woensdag 05-aug-26.md`. De schakelaars voor top 1–3 en eerstvolgende projectstappen voegen live DataviewJS-code toe aan of verwijderen die uit het Markdownformat en werken de preview direct bij. Alleen taken met `#tasks-nl-review` verschijnen in Review.
 
 **Automatic creation**
 
-Maakt het betreffende reviewdocument automatisch op de gekozen weekdag.
+Voor het dagjournaal controleert Tasks NL één keer bij opstarten of herladen of het bestand van vandaag bestaat. Week- en maandreviews worden op de gekozen weekdag aangemaakt.
+
+**Top 1, 2 en 3 opnemen / Eerstvolgende projectstappen opnemen**
+
+Deze twee vinkvelden voegen onafhankelijk echte DataviewJS-codeblokken toe aan het Markdownformat. Bij **Ja** staat het codeblok in het format en verschijnt het resultaat in de preview; bij **Nee** wordt het volledig verwijderd. In het dagjournaal worden focustaken herkenbaar weergegeven met nummer **1**, **2** of **3** en eerstvolgende projectstappen met een vlag. De herkenningscode zit binnen het uitgevoerde DataviewJS-blok, zodat er in Live Preview geen losse grijze beheerregels, lijstbolletjes of lijstaccenten verschijnen. Automatisch en handmatig aanmaken synchroniseren het format vlak vóór het bestand wordt geschreven. De code zoekt bij het openen van het dagjournaal steeds opnieuw naar focus 1–3 respectievelijk de gemarkeerde eerstvolgende projectstappen. De schakelvolgorde uit → aan → uit → aan kan veilig worden herhaald zonder dubbele codeblokken.
+
+**Properties**
+
+Vrije YAML-properties zonder de omliggende `---`. Ook hier zijn templatevariabelen beschikbaar.
 
 **Weekday**
 
@@ -166,7 +179,7 @@ Een kommagescheiden lijst hashtags waarvan taken normaal verborgen worden, bijvo
 
 ```
 
-De knop **Hidden** in de Workspace toont juist de verborgen taken. In de meegeleverde hotfix worden die taken gesorteerd op de eerste overeenkomende uitgesloten hashtag en daarna op titel. Verborgen review-deeltaken worden niet in dit overzicht getoond.
+De knop **Hidden** in de Workspace toont juist de verborgen taken. Die taken worden gesorteerd op de eerste overeenkomende uitgesloten hashtag en daarna op titel. Verborgen review-deeltaken worden niet in dit overzicht getoond.
 ## 3. Nieuwe taak maken
 
 <img src="image/new task.png" width= 600>

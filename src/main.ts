@@ -6,16 +6,19 @@ import { RecurringTaskService } from "./services/RecurringTaskService";
 import {
 	TasksNLSettings,
 	TasksNLSettingTab,
+	renderDailyJournalSections,
 } from "./settings";
 import { SettingsManager } from "./services/SettingsManager";
 import { NewTaskModal } from "./ui/NewTaskModal";
 import { TemplatePickerModal } from "./ui/TemplatePickerModal";
 import type { TaskTemplate } from "./settings";
 import type { EditableSubtask } from "./ui/NewTaskModal";
+import { internalMarkerExtension } from "./editor/InternalMarkerExtension";
 import {
 	TASKS_NL_WORKSPACE_VIEW,
 	TasksNLWorkspaceView,
 } from "./workspace/WorkspaceView";
+import { migrateLegacyDailyJournalBlocks } from "./journal/DailyJournalTemplate";
 
 export default class TasksNLPlugin extends Plugin {
 	settings!: TasksNLSettings;
@@ -33,6 +36,7 @@ export default class TasksNLPlugin extends Plugin {
 		this.settings = await this.settingsManager.load();
 		this.repository = new TaskRepository(this.app);
 		this.recurringTaskService = new RecurringTaskService(this.app);
+		this.registerEditorExtension(internalMarkerExtension);
 
 		this.registerEvent(this.app.vault.on("modify", (file) => {
 			if (!(file instanceof TFile)) return;
@@ -89,14 +93,28 @@ export default class TasksNLPlugin extends Plugin {
 
 		this.app.workspace.onLayoutReady(() => {
 			void this.recurringTaskService.initialize();
-			void this.checkAutomaticReviews();
+			void this.initializeAutomaticReviews();
 		});
-		this.registerInterval(window.setInterval(() => void this.checkAutomaticReviews(), 60 * 60 * 1000));
+	}
+
+	private async initializeAutomaticReviews(): Promise<void> {
+		await this.migrateLegacyDailyJournals();
+		await this.checkAutomaticReviews();
+	}
+
+	private async migrateLegacyDailyJournals(): Promise<void> {
+		const template = this.settings.taskTemplates.find((item) => item.id === "day-journal");
+		if (!template) return;
+		const folder = template.folderPath.replace(/^\/+|\/+$/gu, "");
+		const prefix = folder ? `${folder}/` : "";
+		const files = this.app.vault.getMarkdownFiles().filter((file) =>
+			file.path.startsWith(prefix)
+		);
+		await Promise.all(files.map((file) => this.migrateCurrentDailyJournal(file, template)));
 	}
 
 	async saveSettings(): Promise<void> {
 		await this.settingsManager.save(this.settings);
-		this.settings = this.settingsManager.current;
 		this.refreshOptionalUi();
 
 		const workspaceViews = this.app.workspace
@@ -193,7 +211,8 @@ export default class TasksNLPlugin extends Plugin {
 	private async checkAutomaticReviews(): Promise<void> {
 		const today = new Date();
 		for (const template of this.settings.taskTemplates) {
-			if (!template.autoCreate || today.getDay() !== (template.autoCreateWeekday ?? 5)) continue;
+			if (!template.autoCreate) continue;
+			if (template.id !== "day-journal" && today.getDay() !== (template.autoCreateWeekday ?? 5)) continue;
 			if (template.id === "month-review") {
 				const nextWeek = new Date(today);
 				nextWeek.setDate(today.getDate() + 7);
@@ -201,14 +220,39 @@ export default class TasksNLPlugin extends Plugin {
 			}
 			const fileName = this.resolveTemplateFileName(template);
 			const service = new TaskCreationService(this.app, this.settings);
+			if (template.id === "day-journal") {
+				const dailyTemplate = {
+					...template,
+					noteTemplate: renderDailyJournalSections(
+						template.noteTemplate,
+						template.includeTopThree ?? false,
+						template.includeNextProjectSteps ?? false,
+						"",
+						"",
+					),
+				};
+				const file = await service.createTaskNote(dailyTemplate, fileName, "", [], { duplicateMode: "skip" });
+				if (file) await this.migrateCurrentDailyJournal(file, template);
+				continue;
+			}
 			await service.createTaskNote(
 				template,
 				fileName,
 				this.prepareTemplateTaskText(template, fileName),
 				template.subtasks.map((item) => this.resolveTemplateVariables(item, fileName)),
-				{ openFile: false, duplicateMode: "skip" }
+				{ duplicateMode: "skip" }
 			);
 		}
+	}
+
+	private async migrateCurrentDailyJournal(file: TFile, template: TaskTemplate): Promise<void> {
+		const current = await this.app.vault.cachedRead(file);
+		const migrated = migrateLegacyDailyJournalBlocks(
+			current,
+			template.includeTopThree ?? false,
+			template.includeNextProjectSteps ?? false,
+		);
+		if (migrated !== current) await this.app.vault.modify(file, migrated.endsWith("\n") ? migrated : `${migrated}\n`);
 	}
 
 	private resolveTemplateVariables(value: string, fileName = ""): string {
@@ -224,7 +268,8 @@ export default class TasksNLPlugin extends Plugin {
 	}
 
 	private resolveTemplateFileName(template: TaskTemplate): string {
-		const formatted = moment().format(template.fileNamePattern || "YYYY-MM-DD [Template]");
+		const clock = template.id === "day-journal" ? moment().locale("nl") : moment();
+		const formatted = clock.format(template.fileNamePattern || "YYYY-MM-DD [Template]");
 		return formatted.replace(/[/:*?"<>|\\]/gu, "-").trim() || "Template";
 	}
 

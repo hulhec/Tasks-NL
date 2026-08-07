@@ -1,5 +1,6 @@
 import { App, moment, PluginSettingTab, Setting, setIcon } from "obsidian";
 import TasksNLPlugin from "./main";
+import { synchronizeDailyJournalBlocks } from "./journal/DailyJournalTemplate";
 
 export interface GTDDefinition {
 	label: string;
@@ -37,6 +38,9 @@ export interface TaskTemplate {
 	builtIn?: boolean;
 	autoCreate?: boolean;
 	autoCreateWeekday?: number;
+	properties?: string;
+	includeTopThree?: boolean;
+	includeNextProjectSteps?: boolean;
 }
 
 export type SettingsLanguage = "nl" | "en";
@@ -51,7 +55,7 @@ export interface TasksNLSettings {
 	showStatusBarItem: boolean;
 	showPreview: boolean;
 	startDateWords: string[];
-	repeatKeyword: "elke" | "om de";
+	repeatKeywords: string[];
 	workspaceExcludedTags: string[];
 	workspaceWidgets: {
 		today: boolean;
@@ -83,7 +87,7 @@ export const DEFAULT_SETTINGS: TasksNLSettings = {
 	showStatusBarItem: false,
 	showPreview: true,
 	startDateWords: ["start op", "vanaf"],
-	repeatKeyword: "elke",
+	repeatKeywords: ["elke", "om de"],
 	workspaceExcludedTags: ["#reminder"],
 	workspaceWidgets: {
 		today: true,
@@ -134,6 +138,21 @@ export const DEFAULT_SETTINGS: TasksNLSettings = {
 		},
 	],
 	taskTemplates: [
+		{
+			id: "day-journal",
+			name: "Dagjournaal",
+			icon: "calendar-days",
+			mainTask: "Dagjournaal {{filename}}",
+			fileNamePattern: "dddd DD-MMM-YY",
+			folderPath: "Kalender/Dagjournaal",
+			properties: "type: dagjournaal\ndatum: {{date}}",
+			noteTemplate: `##### Journaal\n\n`,
+			subtasks: [],
+			builtIn: true,
+			autoCreate: true,
+			includeTopThree: true,
+			includeNextProjectSteps: true,
+		},
 		{
 			id: "week-review",
 			name: "Week review",
@@ -210,6 +229,18 @@ export function normalizeHashtag(value: string): string {
 	return trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
 }
 
+export function renderDailyJournalSections(
+	source: string,
+	includeTopThree: boolean,
+	includeNextProjectSteps: boolean,
+	topThree: string,
+	nextProjectSteps: string,
+): string {
+	void topThree;
+	void nextProjectSteps;
+	return synchronizeDailyJournalBlocks(source, includeTopThree, includeNextProjectSteps);
+}
+
 
 export function normalizeWorkspaceExcludedTags(values: string[]): string[] {
 	const unique = new Set<string>();
@@ -249,7 +280,9 @@ export function mergeSettings(saved: Partial<TasksNLSettings> | null): TasksNLSe
 		showPreview: source.showPreview ?? DEFAULT_SETTINGS.showPreview,
 		startDateWords: (source.startDateWords ?? DEFAULT_SETTINGS.startDateWords)
 			.map((word) => word.trim().toLocaleLowerCase("nl-NL")).filter(Boolean),
-		repeatKeyword: source.repeatKeyword === "om de" ? "om de" : "elke",
+		repeatKeywords: Array.isArray(source.repeatKeywords)
+			? source.repeatKeywords.map((word) => word.trim()).filter(Boolean)
+			: [((source as Partial<TasksNLSettings> & { repeatKeyword?: string }).repeatKeyword ?? "elke")],
 		workspaceExcludedTags: normalizeWorkspaceExcludedTags(
 			source.workspaceExcludedTags ?? DEFAULT_SETTINGS.workspaceExcludedTags
 		),
@@ -297,7 +330,7 @@ export function mergeSettings(saved: Partial<TasksNLSettings> | null): TasksNLSe
 				}
 			}
 
-			return combined.map((item, index) => ({
+			const normalized = combined.map((item, index) => ({
 				id: item.id || `template-${index + 1}`,
 				name: item.name || "Template",
 				icon: item.icon || "list-checks",
@@ -311,7 +344,19 @@ export function mergeSettings(saved: Partial<TasksNLSettings> | null): TasksNLSe
 				builtIn: item.builtIn ?? false,
 				autoCreate: item.autoCreate ?? false,
 				autoCreateWeekday: item.autoCreateWeekday ?? 5,
+				properties: item.properties ?? "",
+				includeTopThree: item.includeTopThree ?? false,
+				includeNextProjectSteps: item.includeNextProjectSteps ?? false,
 			}));
+			const journalOrder = ["day-journal", "week-review", "month-review"];
+			return normalized.sort((a, b) => {
+				const aIndex = journalOrder.indexOf(a.id);
+				const bIndex = journalOrder.indexOf(b.id);
+				if (aIndex < 0 && bIndex < 0) return 0;
+				if (aIndex < 0) return 1;
+				if (bIndex < 0) return -1;
+				return aIndex - bIndex;
+			});
 		})(),
 	};
 }
@@ -347,17 +392,31 @@ export class TasksNLSettingTab extends PluginSettingTab {
 			text: "Next Level Productivity for Obsidian",
 		});
 
-		this.renderLanguageSection(containerEl);
-		this.renderSyncSection(containerEl);
-		this.renderGeneralSection(containerEl);
-		this.renderCaptureSection(containerEl);
-		this.renderGTDSection(containerEl);
-		this.renderRepeatSection(containerEl);
-		this.renderProjectSection(containerEl);
-		this.renderPeopleSection(containerEl);
-		this.renderTemplatesSection(containerEl);
-		this.renderWorkspaceSection(containerEl);
-		this.renderAboutSection(containerEl);
+		const navigation = containerEl.createDiv({ cls: "tasks-nl-settings-navigation" });
+		const generalButton = navigation.createEl("button", { text: this.settingText("Algemeen", "General"), cls: "tasks-nl-settings-navigation-tab is-active" });
+		const formatsButton = navigation.createEl("button", { text: this.settingText("Dag-, week- en maandformats", "Day, week and month formats"), cls: "tasks-nl-settings-navigation-tab" });
+		const generalPane = containerEl.createDiv({ cls: "tasks-nl-settings-pane is-active" });
+		const formatsPane = containerEl.createDiv({ cls: "tasks-nl-settings-pane" });
+		const activate = (formats: boolean): void => {
+			generalPane.toggleClass("is-active", !formats);
+			formatsPane.toggleClass("is-active", formats);
+			generalButton.toggleClass("is-active", !formats);
+			formatsButton.toggleClass("is-active", formats);
+		};
+		generalButton.addEventListener("click", () => activate(false));
+		formatsButton.addEventListener("click", () => activate(true));
+
+		this.renderLanguageSection(generalPane);
+		this.renderSyncSection(generalPane);
+		this.renderGeneralSection(generalPane);
+		this.renderCaptureSection(generalPane);
+		this.renderGTDSection(generalPane);
+		this.renderRepeatSection(generalPane);
+		this.renderProjectSection(generalPane);
+		this.renderPeopleSection(generalPane);
+		this.renderWorkspaceSection(generalPane);
+		this.renderAboutSection(generalPane);
+		this.renderTemplatesSection(formatsPane);
 	}
 
 	private renderLanguageSection(containerEl: HTMLElement): void {
@@ -519,30 +578,45 @@ export class TasksNLSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName(this.settingText("Herhalingswoord", "Recurrence keyword"))
-			.setDesc(this.settingText("Kies het woord dat je invoert. Elk positief aantal dagen, weken, maanden of jaren wordt automatisch naar ‘every’ vertaald.", "Choose the phrase you type. Any positive number of days, weeks, months, or years is translated automatically to ‘every’."))
-			.addDropdown((dropdown) => dropdown
-				.addOption("elke", "elke")
-				.addOption("om de", "om de")
-				.setValue(this.plugin.settings.repeatKeyword)
+			.setName(this.settingText("Herhalingswoorden", "Recurrence phrases"))
+			.setDesc(this.settingText("Vrije, komma-gescheiden invoerwoorden, bijvoorbeeld ‘elke, om de’.", "Free comma-separated input phrases, for example ‘every, each’."))
+			.addText((text) => text
+				.setPlaceholder("elke, om de")
+				.setValue(this.plugin.settings.repeatKeywords.join(", "))
 				.onChange(async (value) => {
-					this.plugin.settings.repeatKeyword = value === "om de" ? "om de" : "elke";
+					this.plugin.settings.repeatKeywords = parseSynonyms(value);
 					await this.persist();
 				}));
 	}
 
 	private renderTemplatesSection(containerEl: HTMLElement): void {
-		new Setting(containerEl).setName(this.settingText("Evaluaties", "Reviews")).setHeading();
+		new Setting(containerEl).setName(this.settingText("Journaalformats", "Journal formats")).setHeading();
 		containerEl.createEl("p", {
-			text: this.settingText("Configureer de wekelijkse en maandelijkse evaluatienotities. Het voorbeeld wordt direct bijgewerkt.", "Configure the weekly and monthly review notes. The preview updates immediately."),
+			text: this.settingText("Stel hier afzonderlijk het dagjournaal en de week- en maandreviews in. Wijzigingen worden automatisch opgeslagen en het voorbeeld wordt direct bijgewerkt.", "Configure the daily journal and weekly and monthly reviews separately. Changes are saved automatically and the preview updates immediately."),
 			cls: "setting-item-description",
 		});
 
-		for (const template of this.plugin.settings.taskTemplates.filter((item) => item.id === "week-review" || item.id === "month-review")) {
+		const tabs = containerEl.createDiv({ cls: "tasks-nl-template-tabs" });
+		const panels = containerEl.createDiv();
+		const order = ["day-journal", "week-review", "month-review"];
+		const templates = this.plugin.settings.taskTemplates
+			.filter((item) => order.includes(item.id))
+			.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+		let activeId = templates[0]?.id;
+		for (const template of templates) {
 			const layout = containerEl.createDiv({ cls: "tasks-nl-review-settings-layout" });
+			panels.appendChild(layout);
+			layout.toggleClass("is-active", template.id === activeId);
+			const tab = tabs.createEl("button", { text: template.id === "day-journal" ? this.settingText("Dag", "Day") : template.id === "week-review" ? this.settingText("Week", "Week") : this.settingText("Maand", "Month"), cls: "tasks-nl-template-tab" });
+			tab.addEventListener("click", () => {
+				activeId = template.id;
+				panels.querySelectorAll(":scope > .tasks-nl-review-settings-layout").forEach((panel) => panel.toggleClass("is-active", panel === layout));
+				tabs.querySelectorAll("button").forEach((button) => button.toggleClass("is-active", button === tab));
+			});
+			tab.toggleClass("is-active", template.id === activeId);
 			const controls = layout.createDiv({ cls: "tasks-nl-review-settings-controls" });
 			const preview = layout.createDiv({ cls: "tasks-nl-review-settings-preview" });
-			new Setting(controls).setName("").setHeading();
+			new Setting(controls).setName(this.settingText("Aanmaken en planning", "Creation and schedule")).setHeading();
 			new Setting(preview).setName(this.settingText("Voorbeeld", "Preview")).setHeading();
 
 			const refreshPreview = (): void => {
@@ -550,21 +624,32 @@ export class TasksNLSettingTab extends PluginSettingTab {
 				const fileName = moment().format(template.fileNamePattern || "YYYY-MM-DD [Review]");
 				preview.createDiv({ cls: "tasks-nl-review-preview-file", text: `${template.folderPath ? `${template.folderPath}/` : ""}${fileName}.md` });
 				const tasks = [`- [ ] ${template.mainTask.replace(/\{\{filename\}\}/giu, fileName)} #tasks-nl-review`, ...template.subtasks.map((item) => `  - [ ] ${item}`)].join("\n");
-				const rendered = (template.noteTemplate || "##### Tasks\n\n{{TASKS}}\n")
-					.replace(/\{\{tasks\}\}/giu, tasks)
-					.replace(/\{\{filename\}\}/giu, fileName)
-					.replace(/\{\{date\}\}/giu, moment().format("YYYY-MM-DD"))
-					.replace(/\{\{day\}\}/giu, moment().format("dddd"))
-					.replace(/\{\{week\}\}/giu, moment().format("WW"))
-					.replace(/\{\{month\}\}/giu, moment().format("MMMM"))
-					.replace(/\{\{month_number\}\}/giu, moment().format("MM"))
-					.replace(/\{\{year\}\}/giu, moment().format("YYYY"))
-					.replace(/\{\{review_type\}\}/giu, template.name);
-				preview.createEl("pre", { text: rendered });
+				const values: Record<string, string> = { tasks, filename: fileName, date: moment().format("YYYY-MM-DD"), day: moment().format("dddd"), week: moment().format("WW"), month: moment().format("MMMM"), month_number: moment().format("MM"), year: moment().format("YYYY"), review_type: template.name };
+				const replaceCodes = (value: string): string => value.replace(/\{\{?(tasks|filename|date|day|week|month|month_number|year|review_type)\}?\}/giu, (match, key: string) => values[key.toLocaleLowerCase()] ?? match);
+				let previewTemplate = template.noteTemplate || "##### Journaal\n\n";
+				if (template.id === "day-journal") {
+					previewTemplate = renderDailyJournalSections(
+						previewTemplate,
+						template.includeTopThree ?? false,
+						template.includeNextProjectSteps ?? false,
+						"- [ ] Voorbeeld focustaak 1\n- [ ] Voorbeeld focustaak 2\n- [ ] Voorbeeld focustaak 3",
+						"- [ ] Voorbeeld van een eerstvolgende projectstap",
+					);
+				}
+				const rendered = replaceCodes(previewTemplate);
+				const rawProperties = (template.properties ?? "").trim();
+				const properties = (rawProperties.match(/^---\s*\r?\n([\s\S]*?)\r?\n---$/u)?.[1] ?? rawProperties).trim();
+				const existingFrontmatter = rendered.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/u);
+				if (properties && existingFrontmatter) {
+					const body = rendered.slice(existingFrontmatter[0].length);
+					preview.createEl("pre", { text: `---\n${existingFrontmatter[1]?.trim() ?? ""}\n${replaceCodes(properties)}\n---\n${body}` });
+				} else {
+					preview.createEl("pre", { text: properties ? `---\n${replaceCodes(properties)}\n---\n${rendered}` : rendered });
+				}
 			};
 			new Setting(controls)
 				.setName(this.settingText("Automatisch aanmaken", "Automatic creation"))
-				.setDesc(this.settingText("Maak de evaluatie automatisch aan op de geselecteerde weekdag.", "Create the review automatically on the selected weekday."))
+				.setDesc(template.id === "day-journal" ? this.settingText("Controleer bij opstarten of herladen of vandaag al bestaat.", "Check at startup or reload whether today's journal exists.") : this.settingText("Maak de evaluatie automatisch aan op de geselecteerde weekdag.", "Create the review automatically on the selected weekday."))
 				.addToggle((toggle) =>
 					toggle
 						.setValue(template.autoCreate ?? false)
@@ -574,22 +659,21 @@ export class TasksNLSettingTab extends PluginSettingTab {
 						}),
 				);
 
-			new Setting(controls)
+			if (template.id !== "day-journal") new Setting(controls)
 				.setName(this.settingText("Weekdag", "Weekday"))
-				.setDesc(
-					"Friday is the default. The monthly review uses the last selected weekday in the month.",
-				)
+				.setDesc(this.settingText("Vrijdag is de standaard. De maandreview gebruikt de laatste gekozen weekdag van de maand.", "Friday is the default. The monthly review uses the last selected weekday of the month."))
 				.addDropdown((dropdown) => {
-					[
-						[1, "Monday"],
-						[2, "Tuesday"],
-						[3, "Wednesday"],
-						[4, "Thursday"],
-						[5, "Friday"],
-						[6, "Saturday"],
-						[0, "Sunday"],
-					].forEach(([value, label]) => {
-						dropdown.addOption(String(value), String(label));
+					const weekdays: Array<[number, string, string]> = [
+						[1, "Maandag", "Monday"],
+						[2, "Dinsdag", "Tuesday"],
+						[3, "Woensdag", "Wednesday"],
+						[4, "Donderdag", "Thursday"],
+						[5, "Vrijdag", "Friday"],
+						[6, "Zaterdag", "Saturday"],
+						[0, "Zondag", "Sunday"],
+					];
+					weekdays.forEach(([value, nlLabel, enLabel]) => {
+						dropdown.addOption(String(value), this.settingText(nlLabel, enLabel));
 					});
 
 					dropdown
@@ -600,9 +684,31 @@ export class TasksNLSettingTab extends PluginSettingTab {
 						});
 				});
 
+			let journalEditor: HTMLTextAreaElement | null = null;
+			const applyJournalSwitches = (): void => {
+				if (template.id !== "day-journal") return;
+				template.noteTemplate = synchronizeDailyJournalBlocks(
+					template.noteTemplate,
+					template.includeTopThree ?? false,
+					template.includeNextProjectSteps ?? false,
+				);
+				if (journalEditor) journalEditor.value = template.noteTemplate;
+				refreshPreview();
+				void this.persist();
+			};
+
+			if (template.id === "day-journal") {
+				new Setting(controls).setName(this.settingText("Top 1, 2 en 3 opnemen", "Include top 1, 2 and 3")).addToggle((toggle) => toggle.setValue(template.includeTopThree ?? false).onChange((value) => { template.includeTopThree = value; applyJournalSwitches(); }));
+				new Setting(controls).setName(this.settingText("Eerstvolgende projectstappen opnemen", "Include next project steps")).addToggle((toggle) => toggle.setValue(template.includeNextProjectSteps ?? false).onChange((value) => { template.includeNextProjectSteps = value; applyJournalSwitches(); }));
+			}
+
+			new Setting(controls).setName(this.settingText("Bestand", "File")).setHeading();
+
 			new Setting(controls)
 				.setName(this.settingText("Map in kluis", "Folder in vault"))
-				.setDesc(this.settingText("Beide evaluatietypen mogen dezelfde map gebruiken.", "Both review types may use the same folder."))
+				.setDesc(template.id === "day-journal"
+					? this.settingText("In deze map worden de automatisch aangemaakte dagjournalen opgeslagen.", "Automatically created daily journals are stored in this folder.")
+					: this.settingText("Week- en maandreviews mogen dezelfde map gebruiken.", "Weekly and monthly reviews may use the same folder."))
 				.addText((text) =>
 					text
 						.setPlaceholder("Reviews")
@@ -618,9 +724,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 
 			new Setting(controls)
 				.setName(this.settingText("Bestandsnaamformaat", "Filename format"))
-				.setDesc(
-					"Moment syntax. Literal text goes in square brackets. Example shown on the right.",
-				)
+				.setDesc(this.settingText("Gebruik Moment-syntax. Zet vaste tekst tussen vierkante haken; rechts staat een voorbeeld.", "Use Moment syntax. Put literal text in square brackets; an example appears on the right."))
 				.addText((text) =>
 					text
 						.setValue(template.fileNamePattern)
@@ -634,7 +738,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 						}),
 				);
 
-			new Setting(controls)
+			if (template.id !== "day-journal") new Setting(controls)
 				.setName(this.settingText("Hoofdtaak", "Main task"))
 				.setDesc(this.settingText("Gebruik {{FILENAME}} om de gegenereerde notitienaam in te voegen.", "Use {{FILENAME}} to insert the generated note name."))
 				.addText((text) =>
@@ -649,19 +753,31 @@ export class TasksNLSettingTab extends PluginSettingTab {
 						}),
 				);
 
-			controls.createEl("label", {
-				text: "Subtasks, one per line",
+			new Setting(controls).setName(this.settingText("Inhoud", "Content")).setHeading();
+			controls.createEl("label", { text: this.settingText("Properties (YAML, zonder ---)", "Properties (YAML, without ---)"), cls: "tasks-nl-review-editor-label" });
+			controls.createEl("p", { text: this.settingText("Eén property per regel, bijvoorbeeld type: dagjournaal. Als het Markdownformat al properties bevat, worden deze samengevoegd.", "Enter one property per line, for example type: daily-journal. If the Markdown template already contains properties, they are merged."), cls: "setting-item-description" });
+			const properties = controls.createEl("textarea", { cls: "tasks-nl-template-properties", attr: { rows: "5" } });
+			properties.value = template.properties ?? "";
+			let saveTimer: number | undefined;
+			const schedulePersist = (): void => {
+				if (saveTimer !== undefined) window.clearTimeout(saveTimer);
+				saveTimer = window.setTimeout(() => void this.persist(), 300);
+			};
+			properties.addEventListener("input", () => { template.properties = properties.value; refreshPreview(); schedulePersist(); });
+
+			if (template.id !== "day-journal") controls.createEl("label", {
+				text: this.settingText("Deeltaken, één per regel", "Subtasks, one per line"),
 				cls: "tasks-nl-review-editor-label",
 			});
 
-			const subtasks = controls.createEl("textarea", {
+			const subtasks = template.id !== "day-journal" ? controls.createEl("textarea", {
 				cls: "tasks-nl-template-subtasks",
 				attr: { rows: "6" },
-			});
+			}) : null;
 
-			subtasks.value = template.subtasks.join("\n");
+			if (subtasks) subtasks.value = template.subtasks.join("\n");
 
-			subtasks.addEventListener("input", () => {
+			subtasks?.addEventListener("input", () => {
 				template.subtasks = subtasks.value
 					.split(/\r?\n/u)
 					.map((item) => item.trim())
@@ -670,12 +786,12 @@ export class TasksNLSettingTab extends PluginSettingTab {
 				refreshPreview();
 			});
 
-			subtasks.addEventListener("change", () => {
+			subtasks?.addEventListener("change", () => {
 				void this.persist();
 			});
 
 			controls.createEl("label", {
-				text: "Markdown template",
+				text: this.settingText("Markdownformat", "Markdown template"),
 				cls: "tasks-nl-review-editor-label",
 			});
 
@@ -686,21 +802,30 @@ export class TasksNLSettingTab extends PluginSettingTab {
 					spellcheck: "false",
 				},
 			});
+			journalEditor = editor;
 
+			if (template.id === "day-journal") {
+				const synchronized = synchronizeDailyJournalBlocks(
+					template.noteTemplate,
+					template.includeTopThree ?? false,
+					template.includeNextProjectSteps ?? false,
+				);
+				if (synchronized !== template.noteTemplate) {
+					template.noteTemplate = synchronized;
+					void this.persist();
+				}
+			}
 			editor.value = template.noteTemplate;
 
 			editor.addEventListener("input", () => {
 				template.noteTemplate = editor.value;
 				refreshPreview();
-			});
-
-			editor.addEventListener("change", () => {
-				void this.persist();
+				schedulePersist();
 			});
 
 			controls.createEl("p", {
 				cls: "setting-item-description",
-				text: "Variables: {{TASKS}}, {{DATE}}, {{DAY}}, {{WEEK}}, {{MONTH}}, {{MONTH_NUMBER}}, {{YEAR}}, {{FILENAME}}, {{REVIEW_TYPE}}. Put {{TASKS}} exactly where the task list should appear.",
+				text: this.settingText("Codes: {TASKS} of {{TASKS}}, {DATE} of {{DATE}}, DAY, WEEK, MONTH, MONTH_NUMBER, YEAR, FILENAME en REVIEW_TYPE. Alleen deze bekende codes worden vervangen; overige accolades en code blijven ongewijzigd.", "Codes: {TASKS} or {{TASKS}}, {DATE} or {{DATE}}, DAY, WEEK, MONTH, MONTH_NUMBER, YEAR, FILENAME and REVIEW_TYPE. Only these known codes are replaced; other braces and code remain unchanged."),
 			});
 
 			refreshPreview();
@@ -755,13 +880,13 @@ export class TasksNLSettingTab extends PluginSettingTab {
 	private renderGTDSection(containerEl: HTMLElement): void {
 		const section = this.createSection(
 			containerEl,
-			"GTD statuses",
-			"Name, recognised terms and hashtag are shown side by side."
+			this.settingText("GTD-statussen", "GTD statuses"),
+			this.settingText("Naam, herkenningswoorden en hashtag staan naast elkaar.", "Name, recognised terms and hashtag are shown side by side.")
 		);
 
 		const table = this.createTable(section, "tasks-nl-table--gtd", [
-			"Name",
-			"Search terms",
+			this.settingText("Naam", "Name"),
+			this.settingText("Herkenningswoorden", "Search terms"),
 			"Hashtag",
 			"",
 		]);
@@ -804,7 +929,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 			});
 		}
 
-		this.createAddButton(section, "Add GTD status", async () => {
+		this.createAddButton(section, this.settingText("GTD-status toevoegen", "Add GTD status"), async () => {
 			this.plugin.settings.gtdDefinitions.push({
 				label: "New status",
 				hashtag: "#nieuwe-status",
@@ -817,13 +942,13 @@ export class TasksNLSettingTab extends PluginSettingTab {
 	private renderProjectSection(containerEl: HTMLElement): void {
 		const section = this.createSection(
 			containerEl,
-			"Projects",
+			this.settingText("Projecten", "Projects"),
 			this.settingText("Een project wordt herkend aan naam, afkorting of bestaande hashtag. Gebruik voor elk project een unieke hashtag.", "A project is recognised by its name, abbreviation, or existing hashtag. Use a unique hashtag for every project.")
 		);
 
 		const table = this.createTable(section, "tasks-nl-table--projects", [
-			"Name",
-			"Abbreviation",
+			this.settingText("Naam", "Name"),
+			this.settingText("Afkorting", "Abbreviation"),
 			"Hashtag",
 			"",
 		]);
@@ -876,14 +1001,14 @@ export class TasksNLSettingTab extends PluginSettingTab {
 	private renderPeopleSection(containerEl: HTMLElement): void {
 		const section = this.createSection(
 			containerEl,
-			"People",
+			this.settingText("Personen", "People"),
 			this.settingText("Een persoon wordt herkend aan voornaam, volledige naam, afkorting of hashtag. Per taak worden maximaal twee personen verwerkt en in de Workspace getoond.", "A person is recognised by first name, full name, abbreviation, or hashtag. A maximum of two people is processed per task and shown in the Workspace.")
 		);
 
 		const table = this.createTable(section, "tasks-nl-table--people", [
-			"First name",
-			"Last name",
-			"Abbreviation",
+			this.settingText("Voornaam", "First name"),
+			this.settingText("Achternaam", "Last name"),
+			this.settingText("Afkorting", "Abbreviation"),
 			"Hashtag",
 			"",
 		]);
@@ -931,7 +1056,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 			});
 		}
 
-		this.createAddButton(section, "Add person", async () => {
+		this.createAddButton(section, this.settingText("Persoon toevoegen", "Add person"), async () => {
 			this.plugin.settings.personDefinitions.push({
 				firstName: "New",
 				lastName: "Person",
@@ -948,7 +1073,7 @@ export class TasksNLSettingTab extends PluginSettingTab {
 		description: string
 	): HTMLElement {
 		const section = containerEl.createDiv({ cls: "tasks-nl-settings-section" });
-		new Setting(section).setName("").setHeading();
+		new Setting(section).setName(title).setHeading();
 		section.createEl("p", {
 			text: description,
 			cls: "setting-item-description",
@@ -1000,11 +1125,11 @@ export class TasksNLSettingTab extends PluginSettingTab {
 		onClick: () => Promise<void>
 	): HTMLButtonElement {
 		const button = parent.createEl("button", {
-			text: "Delete",
+			text: this.settingText("Verwijderen", "Delete"),
 			cls: "mod-warning tasks-nl-delete-button",
 			attr: {
 				type: "button",
-				"aria-label": "Delete",
+				"aria-label": this.settingText("Verwijderen", "Delete"),
 			},
 		});
 

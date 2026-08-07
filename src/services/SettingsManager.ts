@@ -32,7 +32,11 @@ export class SettingsManager {
 	}
 
 	async save(settings: TasksNLSettings): Promise<void> {
-		this.settings = mergeSettings(settings);
-		await this.plugin.saveData(this.settings);
+		// Keep the live settings object (and its nested template objects) stable.
+		// Settings controls retain references to those objects while the tab is
+		// open; replacing them after every keystroke makes later edits target a
+		// stale object and silently drops journal text and properties.
+		this.settings = settings;
+		await this.plugin.saveData(settings);
 	}
 }

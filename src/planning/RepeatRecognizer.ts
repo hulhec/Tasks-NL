@@ -24,7 +24,7 @@ const WEEKDAYS: Record<string, { index: number; english: string }> = {
 };
 
 export class RepeatRecognizer {
-	constructor(private readonly keyword: "elke" | "om de" = "elke") {}
+	constructor(private readonly keywords: string[] = ["elke"]) {}
 
 	recognize(input: string): RepeatRule | undefined {
 		const normalized = input
@@ -33,7 +33,9 @@ export class RepeatRecognizer {
 			.trim();
 
 
-		const keyword = this.keyword.replace(/ /gu, "\\s+");
+		const keyword = this.keywords.length > 0
+			? `(?:${this.keywords.map((value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/ /gu, "\\s+")).join("|")})`
+			: "elke";
 
 		const monthlyWeekday = normalized.match(
 			new RegExp(`\\b${keyword}\\s+(eerste|laatste)\\s+(maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)(?:\\s+van\\s+de\\s+maand)?\\b`, "u")
